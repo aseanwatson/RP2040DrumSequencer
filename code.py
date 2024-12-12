@@ -9,7 +9,7 @@
 # Range is note 35/B0 - 81/A4, but classic 808 set is defined here
 
 import time
-from adafruit_ticks import ticks_ms, ticks_diff, ticks_add
+from adafruit_ticks import ticks_ms, ticks_diff, ticks_add, ticks_less
 import board
 from digitalio import DigitalInOut, Pull
 import keypad
@@ -116,21 +116,52 @@ class drum_set:
     def __iter__(self):
         return iter(self.drums)
 
-def set_bpm(newbpm: int):
-    global bpm, steps_millis
-    bpm = newbpm
-    beat_time = 60/bpm  # time length of a single beat
-    beat_millis = beat_time * 1000
-    steps_millis = beat_millis / steps_per_beat
+
+class ticker:
+    # subdivide beats down to to 16th notes
+    # Beat timing assumes 4/4 time signature, 
+    # e.g. 4 beats per measure, 1/4 note gets the beat
+    steps_per_beat = 4
+
+    min_bpm = 10
+    max_bpm = 400
+
+    def __init__(self, bpm):
+        self.set_bpm(bpm)
+        self.restart()
+
+    def restart(self):
+        self.next_step = ticks_ms()
+
+    def set_step_time(self, step_ms):
+        delta = step_ms - self.step_ms
+        self.step_ms = step_ms
+        self.next_step = ticks_add(self.next_step, delta)
+        # TODO: what do we do if the next_time is now in the past?
+    
+    def advance(self):
+        if ticks_less(ticks_ms(), self.next_step):
+            # it's not time to advance
+            return False
+
+        self.next_step = ticks_add(self.next_step, self.ms_per_step)
+        return True
+
+    def set_bpm(self, bpm):
+        self.bpm = min(max(bpm, ticker.min_bpm), ticker.max_bpm)
+        seconds_per_beat = 60/bpm
+        ms_per_beat = seconds_per_beat * 1000
+        self.ms_per_step = ms_per_beat / ticker.steps_per_beat
+
+    def adjust_bpm(self, adjustment):
+        self.set_bpm(self.bpm + adjustment)
+
+ticker = ticker(120)
 
 # define I2C
 i2c = board.STEMMA_I2C()
 
 num_steps = 8  # number of steps/switches per row
-steps_per_beat = 4  # subdivide beats down to to 16th notes
-# Beat timing assumes 4/4 time signature, 
-# e.g. 4 beats per measure, 1/4 note gets the beat
-set_bpm(120)
 
 stepper = stepper(num_steps)
 playing = False
@@ -219,6 +250,7 @@ class nvm_header:
         return struct.unpack_from(nvm_header.format, buffer, offset)
 
 def save_state() -> None:
+    global ticker
     length = nvm_header.size
     for drum in drums:
         length += drum.sequence.bytelen()
@@ -228,7 +260,7 @@ def save_state() -> None:
         0,
         magic_number,
         num_steps,
-        bpm)
+        ticker.bpm)
     index = nvm_header.size
     for drum in drums:
         drum.sequence.save(bytes, index)
@@ -238,7 +270,7 @@ def save_state() -> None:
     microcontroller.nvm[0:length] = bytes
 
 def load_state() -> None:
-    global num_steps, bpm, steps_millis
+    global num_steps, ticker, drums
     header = nvm_header.unpack_from(microcontroller.nvm[0:nvm_header.size])
     if header[0] != magic_number or header[1] == 0 or header[2] == 0:
         return
@@ -249,7 +281,7 @@ def load_state() -> None:
         seq = drum.sequence
         seq.load(microcontroller.nvm[index:index+seq.bytelen()])
         index += seq.bytelen()
-    set_bpm(newbpm)
+    ticker.set_bpm(newbpm)
 
 # try to load the state (no-op if NVM not valid)
 load_state()
@@ -258,7 +290,7 @@ display = segments.Seg14x4(i2c, address=(0x70))
 display.brightness = 0.3
 display.fill(0)
 display.show()
-display.print(bpm)
+display.print(ticker.bpm)
 display.show()
 
 print("Drum Trigger 2040")
@@ -274,7 +306,7 @@ display.marquee("2040", 0.05, loop=False)
 time.sleep(1)
 display.marquee("BPM", 0.05, loop=False)
 time.sleep(0.75)
-display.marquee(str(bpm), 0.1, loop=False)
+display.marquee(str(ticker.bpm), 0.1, loop=False)
 
 # light up initial LEDs
 for drum_index in range(len(drums)):
@@ -282,7 +314,6 @@ for drum_index in range(len(drums)):
     for step_index in range(num_steps):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 leds.write()
-last_step = ticks_ms()
 while True:
     start_button.update()
     if start_button.fell:  # pushed encoder button plays/stops transport
@@ -291,7 +322,7 @@ while True:
             save_state()
         playing = not playing
         stepper.reset()
-        last_step = int(ticks_add(ticks_ms(), -steps_millis))
+        ticker.restart()
         print("*** Play:", playing)
 
     reverse_button.update()
@@ -299,12 +330,7 @@ while True:
         stepper.reverse()
 
     if playing:
-        now = ticks_ms()
-        diff = ticks_diff(now, last_step)
-        if diff >= steps_millis:
-            late_time = ticks_diff(int(diff), int(steps_millis))
-            last_step = ticks_add(now, - late_time//2)
-
+        if ticker.advance():
             # TODO: how to display the current step? Separate LED?
             drums.play_step(stepper.current_step)
             # TODO: how to display the current step? Separate LED?
@@ -328,11 +354,9 @@ while True:
 
     if encoder_pos != last_encoder_pos:
         encoder_delta = encoder_pos - last_encoder_pos
-        newbpm = bpm + encoder_delta  # or (encoder_delta * 5)
-        newbpm = min(max(newbpm, 10), 400)
-        set_bpm(newbpm)
+        ticker.adjust_bpm(encoder_delta)
         display.fill(0)
-        display.print(bpm)
+        display.print(ticker.bpm)
         last_encoder_pos = encoder_pos
 
  # suppresions:
