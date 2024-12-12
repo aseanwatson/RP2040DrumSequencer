@@ -331,7 +331,6 @@ while True:
         if ticker.advance():
             # TODO: how to display the current step? Separate LED?
             drums.play_step(stepper.current_step)
-            # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
             encoder_pos = -encoder.position  # only check encoder while playing between steps
     else:  # check the encoder all the time when not playing
