@@ -81,6 +81,13 @@ class drum:
     def __repr__(self):
         return f'drum({repr(self.name)},{repr(self.note)},{repr(self.sequence)})'
 
+    def play(self, midi, step):
+        if self.sequence[step]:
+            midi_msg_on = bytearray([0x99, self.note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
+            midi_msg_off = bytearray([0x89, self.note, 0])
+            midi.write(midi_msg_on)
+            midi.write(midi_msg_off)
+
 def set_bpm(newbpm: int):
     global bpm, steps_millis
     bpm = newbpm
@@ -153,12 +160,6 @@ drums = [
     drum("MTom", 44, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
     drum("HTom", 56, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
 ]
-
-def play_drum(note):
-    midi_msg_on = bytearray([0x99, note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
-    midi_msg_off = bytearray([0x89, note, 0])
-    midi.write(midi_msg_on)
-    midi.write(midi_msg_off)
 
 def light_steps(drum, step, state):
     # pylint: disable=global-statement
@@ -285,8 +286,7 @@ while True:
 
             # TODO: how to display the current step? Separate LED?
             for drum in drums:
-                if drum.sequence[stepper.current_step]:  # if there's a 1 at the step for the seq, play it
-                    play_drum(drum.note)
+                drum.play(midi, stepper.current_step)
             # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
             encoder_pos = -encoder.position  # only check encoder while playing between steps
