@@ -88,6 +88,14 @@ class drum:
             midi.write(midi_msg_on)
             midi.write(midi_msg_off)
 
+class drum_set:
+    def __init__(self, midi):
+        self.drums = []
+        self.midi = midi
+    
+    def add_drum(self, name, note):
+        self.drums.append(drum(name, note, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])))
+
 def set_bpm(newbpm: int):
     global bpm, steps_millis
     bpm = newbpm
@@ -153,13 +161,12 @@ encoder_pos = -encoder.position
 midi = usb_midi.ports[1]
 
 # default starting sequence
-drums = [
-    drum("Bass", 36, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("Snar", 38, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("LTom", 41, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("MTom", 44, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("HTom", 56, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-]
+drums = drum_set(midi)
+drums.add_drum("Bass", 36)
+drums.add_drum("Snar", 38)
+drums.add_drum("LTom", 41)
+drums.add_drum("MTom", 44)
+drums.add_drum("HTom", 56)
 
 def light_steps(drum, step, state):
     # pylint: disable=global-statement
@@ -175,7 +182,7 @@ def light_steps(drum, step, state):
 
 def print_sequence():
     print("drums = [ ")
-    for drum in drums:
+    for drum in drums.drums:
         print(" " + repr(drum) + ",")
     print("]")
 
@@ -199,7 +206,7 @@ class nvm_header:
 
 def save_state() -> None:
     length = nvm_header.size
-    for drum in drums:
+    for drum in drums.drums:
         length += drum.sequence.bytelen()
     bytes = bytearray(length)
     nvm_header.pack_into(
@@ -209,7 +216,7 @@ def save_state() -> None:
         num_steps,
         bpm)
     index = nvm_header.size
-    for drum in drums:
+    for drum in drums.drums:
         drum.sequence.save(bytes, index)
         index += drum.sequence.bytelen()
     # in one update, write the saved bytes
@@ -224,7 +231,7 @@ def load_state() -> None:
     num_steps = header[1]
     newbpm = header[2]
     index = nvm_header.size
-    for drum in drums:
+    for drum in drums.drums:
         seq = drum.sequence
         seq.load(microcontroller.nvm[index:index+seq.bytelen()])
         index += seq.bytelen()
@@ -257,7 +264,7 @@ display.marquee(str(bpm), 0.1, loop=False)
 
 # light up initial LEDs
 for drum_index in range(len(drums)):
-    drum = drums[drum_index]
+    drum = drums.drums[drum_index]
     for step_index in range(num_steps):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 leds.write()
@@ -285,7 +292,7 @@ while True:
             last_step = ticks_add(now, - late_time//2)
 
             # TODO: how to display the current step? Separate LED?
-            for drum in drums:
+            for drum in drums.drums:
                 drum.play(midi, stepper.current_step)
             # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
@@ -301,7 +308,7 @@ while True:
             print(f"key pressed: {i}")
             drum_index = i // num_steps
             step_index = i % num_steps
-            drum = drums[drum_index]
+            drum = drums.drums[drum_index]
             drum.sequence.toggle(step_index) # toggle step
             light_steps(drum_index, step_index, drum.sequence[step_index])  # toggle light
             leds.write()
