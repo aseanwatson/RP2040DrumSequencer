@@ -99,6 +99,9 @@ class drum_set:
     def __len__(self):
         return len(self.drums)
 
+    def __getitem__(self, i):
+        return self.drums[i]
+
     def __iter__(self):
         return iter(self.drums)
 
@@ -270,7 +273,7 @@ display.marquee(str(bpm), 0.1, loop=False)
 
 # light up initial LEDs
 for drum_index in range(len(drums)):
-    drum = drums.drums[drum_index]
+    drum = drums[drum_index]
     for step_index in range(num_steps):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 leds.write()
@@ -314,7 +317,7 @@ while True:
             print(f"key pressed: {i}")
             drum_index = i // num_steps
             step_index = i % num_steps
-            drum = drums.drums[drum_index]
+            drum = drums[drum_index]
             drum.sequence.toggle(step_index) # toggle step
             light_steps(drum_index, step_index, drum.sequence[step_index])  # toggle light
             leds.write()
