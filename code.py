@@ -96,6 +96,12 @@ class drum_set:
     def add_drum(self, name, note):
         self.drums.append(drum(name, note, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])))
 
+    def print_sequence(self):
+        print("drums = [\n")
+        for drum in self.drums:
+            print(" " + repr(drum) + ",\n")
+        print("]")
+
     def __len__(self):
         return len(self.drums)
 
@@ -189,12 +195,6 @@ def light_steps(drum, step, state):
     else:
         print(f'drum{drum} step{step}: off')
 
-def print_sequence():
-    print("drums = [ ")
-    for drum in drums:
-        print(" " + repr(drum) + ",")
-    print("]")
-
 # format of the header in NVM for save_state/load_state:
 # < -- little-endian; lower bits are more significant
 # B -- magic number
@@ -282,7 +282,7 @@ while True:
     start_button.update()
     if start_button.fell:  # pushed encoder button plays/stops transport
         if playing is True:
-            print_sequence()
+            drums.print_sequence()
             save_state()
         playing = not playing
         stepper.reset()
