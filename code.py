@@ -102,6 +102,10 @@ class drum_set:
             print(" " + repr(drum) + ",\n")
         print("]")
 
+    def play_step(self, step):
+        for drum in self.drums:
+            drum.play(self.midi, step)
+
     def __len__(self):
         return len(self.drums)
 
@@ -301,8 +305,7 @@ while True:
             last_step = ticks_add(now, - late_time//2)
 
             # TODO: how to display the current step? Separate LED?
-            for drum in drums:
-                drum.play(midi, stepper.current_step)
+            drums.play_step(stepper.current_step)
             # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
             encoder_pos = -encoder.position  # only check encoder while playing between steps
