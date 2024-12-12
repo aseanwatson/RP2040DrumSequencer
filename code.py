@@ -96,6 +96,9 @@ class drum_set:
     def add_drum(self, name, note):
         self.drums.append(drum(name, note, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])))
 
+    def __iter__(self):
+        return iter(self.drums)
+
 def set_bpm(newbpm: int):
     global bpm, steps_millis
     bpm = newbpm
@@ -182,7 +185,7 @@ def light_steps(drum, step, state):
 
 def print_sequence():
     print("drums = [ ")
-    for drum in drums.drums:
+    for drum in drums:
         print(" " + repr(drum) + ",")
     print("]")
 
@@ -206,7 +209,7 @@ class nvm_header:
 
 def save_state() -> None:
     length = nvm_header.size
-    for drum in drums.drums:
+    for drum in drums:
         length += drum.sequence.bytelen()
     bytes = bytearray(length)
     nvm_header.pack_into(
@@ -216,7 +219,7 @@ def save_state() -> None:
         num_steps,
         bpm)
     index = nvm_header.size
-    for drum in drums.drums:
+    for drum in drums:
         drum.sequence.save(bytes, index)
         index += drum.sequence.bytelen()
     # in one update, write the saved bytes
@@ -231,7 +234,7 @@ def load_state() -> None:
     num_steps = header[1]
     newbpm = header[2]
     index = nvm_header.size
-    for drum in drums.drums:
+    for drum in drums:
         seq = drum.sequence
         seq.load(microcontroller.nvm[index:index+seq.bytelen()])
         index += seq.bytelen()
@@ -292,7 +295,7 @@ while True:
             last_step = ticks_add(now, - late_time//2)
 
             # TODO: how to display the current step? Separate LED?
-            for drum in drums.drums:
+            for drum in drums:
                 drum.play(midi, stepper.current_step)
             # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
