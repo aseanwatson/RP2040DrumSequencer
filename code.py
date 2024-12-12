@@ -22,8 +22,6 @@ from TLC5916 import TLC5916
 import struct
 import microcontroller
 
-print("test")
-
 class stepper:
     def __init__(self, num_steps):
         self.current_step = 0
