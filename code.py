@@ -96,6 +96,9 @@ class drum_set:
     def add_drum(self, name, note):
         self.drums.append(drum(name, note, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])))
 
+    def __len__(self):
+        return len(self.drums)
+
     def __iter__(self):
         return iter(self.drums)
 
