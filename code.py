@@ -89,12 +89,13 @@ class drum:
             midi.write(midi_msg_off)
 
 class drum_set:
-    def __init__(self, midi):
+    def __init__(self, midi, step_count):
         self.drums = []
         self.midi = midi
+        self.step_count = step_count
     
     def add_drum(self, name, note):
-        self.drums.append(drum(name, note, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])))
+        self.drums.append(drum(name, note, bitarray(self.step_count)))
 
     def print_sequence(self):
         print("drums = [\n")
@@ -180,7 +181,7 @@ encoder_pos = -encoder.position
 midi = usb_midi.ports[1]
 
 # default starting sequence
-drums = drum_set(midi)
+drums = drum_set(midi, num_steps)
 drums.add_drum("Bass", 36)
 drums.add_drum("Snar", 38)
 drums.add_drum("LTom", 41)
