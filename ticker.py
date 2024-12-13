@@ -11,13 +11,12 @@ class ticker:
 
     def __init__(self, bpm: int):
         self.set_bpm(bpm)
-        self.restart()
         self.playing = False
 
     def play(self):
         if not self.playing():
+            self.next_step = ticks_ms()
             self.playing = True
-            self.restart()
 
     def pause(self):
         self.playing = False
@@ -28,15 +27,6 @@ class ticker:
         else:
             self.play()
 
-    def restart(self) -> None:
-        self.next_step = ticks_ms()
-
-    def set_step_time(self, step_ms: int) -> None:
-        delta = step_ms - self.step_ms
-        self.step_ms = step_ms
-        self.next_step = ticks_add(self.next_step, delta)
-        # TODO: what do we do if the next_time is now in the past?
-    
     def advance(self) -> bool:
         if ticks_less(ticks_ms(), self.next_step):
             # it's not time to advance
