@@ -20,7 +20,7 @@ from TLC5916 import TLC5916
 from stepper import stepper
 import struct
 import microcontroller
-from drum import drum
+from drum import drum, BassDrum, AcousticSnare, LowFloorTom, PedalHiHat, CowBell
 from drum_set import drum_set
 from ticker import ticker
 
@@ -82,11 +82,11 @@ stepper = stepper(num_steps)
 
 # default starting sequence
 drums = drum_set(hardware.midi, num_steps)
-drums.add_drum("Bass", 36)
-drums.add_drum("Snar", 38)
-drums.add_drum("LTom", 41)
-drums.add_drum("MTom", 44)
-drums.add_drum("HTom", 56)
+drums.add_drum_definition(BassDrum)
+drums.add_drum_definition(AcousticSnare)
+drums.add_drum_definition(LowFloorTom)
+drums.add_drum_definition(PedalHiHat)
+drums.add_drum_definition(CowBell)
 
 def light_steps(drum_index: int, step: int, state: bool):
     # pylint: disable=global-statement

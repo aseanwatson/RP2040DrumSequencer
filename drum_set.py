@@ -1,4 +1,4 @@
-from drum import drum
+from drum import drum, drum_definition
 import usb_midi
 from bitarray import bitarray
 
@@ -10,6 +10,9 @@ class drum_set:
     
     def add_drum(self, name: str, note: int) -> None:
         self.drums.append(drum(name, note, bitarray(self.step_count)))
+
+    def add_drum_definition(self, definition: drum_definition) -> None:
+        self.add_drum(name=definition.short_name, note=definition.note)
 
     def print_sequence(self) -> None:
         print("drums = [\n")
