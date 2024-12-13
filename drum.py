@@ -27,10 +27,10 @@ class drum:
             midi.write(midi_msg_off)
 
 class drum_definition:
-	def __init__(self, long_name: str, short_name: str, note: int):
-		self.long_name = long_name
-		self.short_name = short_name
-		self.note = note
+    def __init__(self, long_name: str, short_name: str, note: int):
+        self.long_name = long_name
+        self.short_name = short_name
+        self.note = note
 
 # See https://qsrdrums.com/webhelp-responsive/References/r_general_midi_drum_kit.html
 AcousticBassDrum = drum_definition("Acoustic Bass Drum", "ABas", 35)
