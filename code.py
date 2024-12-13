@@ -9,7 +9,6 @@
 # Range is note 35/B0 - 81/A4, but classic 808 set is defined here
 
 import time
-from adafruit_ticks import ticks_ms, ticks_add, ticks_less
 import board
 from digitalio import DigitalInOut, Pull
 import keypad
@@ -17,142 +16,13 @@ import usb_midi
 from adafruit_seesaw import seesaw, rotaryio, digitalio
 from adafruit_debouncer import Debouncer
 from adafruit_ht16k33 import segments
-from bitarray import bitarray
 from TLC5916 import TLC5916
+from stepper import stepper
 import struct
 import microcontroller
-
-class stepper:
-    def __init__(self, num_steps: int):
-        self.current_step = 0
-        self.first_step = 0
-        self.last_step = num_steps - 1
-        self.stepping_forward = True
-        self.num_steps = num_steps
-
-    def advance_step(self) -> int:
-        if self.stepping_forward:
-            if self.current_step < self.last_step:
-                self.current_step = self.current_step + 1
-            else:
-                self.current_step = self.first_step
-        else:
-            if self.current_step > self.first_step:
-                self.current_step = self.current_step - 1
-            else:
-                self.current_step = self.last_step
-        return self.current_step
-
-    def reverse(self) -> None:
-        self.stepping_forward = not self.stepping_forward
-
-    def reset(self) -> None:
-        self.current_step = self.first_step
-
-    def adjust_range_start(self, adjustment: int) -> None:
-        # keep adjustment in the range where self.first_step >= 0 and
-        # self.last_step < self.num_steps
-        adjustment = max(adjustment, -self.first_step)
-        adjustment = min(adjustment, self.last_step - 1 - self.first_step)
-        self.first_step += adjustment
-        self.last_step += adjustment
-        # TODO: self.current_step might be out of range; leave that
-        # as is; advance_step() will move it into the right range
-        # eventually. We might want to revisit this.
-
-    def adjust_range_length(self, adjustment: int) -> None:
-        # keep adjustment in the range where self.first_step <= self.last_step and
-        # self.last_step < self.num_steps
-        adjustment = max(adjustment, self.first_step - self.last_step)
-        adjustment = min(adjustment, self.last_step - 1 - self.first_step)
-        self.last_step += adjustment
-         # TODO: self.current_step might be out of range; leave that
-        # as is; advance_step() will move it into the right range
-        # eventually. We might want to revisit this.
-
-class drum:
-    def __init__(self, name: str, note: int, sequence: bitarray):
-        self.name = name
-        self.note = note
-        self.sequence = sequence
-
-    def __repr__(self) -> str:
-        return f'drum({repr(self.name)},{repr(self.note)},{repr(self.sequence)})'
-
-    def play(self, midi: usb_midi.PortOut, step: int) -> None:
-        if self.sequence[step]:
-            midi_msg_on = bytearray([0x99, self.note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
-            midi_msg_off = bytearray([0x89, self.note, 0])
-            midi.write(midi_msg_on)
-            midi.write(midi_msg_off)
-
-class drum_set:
-    def __init__(self, midi: usb_midi.PortOut, step_count: int):
-        self.drums = []
-        self.midi = midi
-        self.step_count = step_count
-    
-    def add_drum(self, name: str, note: int) -> None:
-        self.drums.append(drum(name, note, bitarray(self.step_count)))
-
-    def print_sequence(self) -> None:
-        print("drums = [\n")
-        for drum in self.drums:
-            print(" " + repr(drum) + ",\n")
-        print("]")
-
-    def play_step(self, step) -> None:
-        for drum in self.drums:
-            drum.play(self.midi, step)
-
-    def __len__(self) -> int:
-        return len(self.drums)
-
-    def __getitem__(self, i: int) -> drum:
-        return self.drums[i]
-
-    def __iter__(self):
-        return iter(self.drums)
-
-
-class ticker:
-    # subdivide beats down to to 16th notes
-    # Beat timing assumes 4/4 time signature, 
-    # e.g. 4 beats per measure, 1/4 note gets the beat
-    steps_per_beat = 4
-
-    min_bpm = 10
-    max_bpm = 400
-
-    def __init__(self, bpm: int):
-        self.set_bpm(bpm)
-        self.restart()
-
-    def restart(self) -> None:
-        self.next_step = ticks_ms()
-
-    def set_step_time(self, step_ms: int) -> None:
-        delta = step_ms - self.step_ms
-        self.step_ms = step_ms
-        self.next_step = ticks_add(self.next_step, delta)
-        # TODO: what do we do if the next_time is now in the past?
-    
-    def advance(self) -> bool:
-        if ticks_less(ticks_ms(), self.next_step):
-            # it's not time to advance
-            return False
-
-        self.next_step = ticks_add(self.next_step, self.ms_per_step)
-        return True
-
-    def set_bpm(self, bpm: int) -> None:
-        self.bpm = min(max(bpm, ticker.min_bpm), ticker.max_bpm)
-        seconds_per_beat = 60/bpm
-        ms_per_beat = seconds_per_beat * 1000
-        self.ms_per_step = ms_per_beat / ticker.steps_per_beat
-
-    def adjust_bpm(self, adjustment: int) -> None:
-        self.set_bpm(self.bpm + adjustment)
+from drum import drum
+from drum_set import drum_set
+from ticker import ticker
 
 ticker = ticker(120)
 
