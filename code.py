@@ -9,7 +9,7 @@
 # Range is note 35/B0 - 81/A4, but classic 808 set is defined here
 
 import time
-from adafruit_ticks import ticks_ms, ticks_diff, ticks_add, ticks_less
+from adafruit_ticks import ticks_ms, ticks_add, ticks_less
 import board
 from digitalio import DigitalInOut, Pull
 import keypad
