@@ -23,14 +23,14 @@ import struct
 import microcontroller
 
 class stepper:
-    def __init__(self, num_steps):
+    def __init__(self, num_steps: int):
         self.current_step = 0
         self.first_step = 0
         self.last_step = num_steps - 1
         self.stepping_forward = True
         self.num_steps = num_steps
 
-    def advance_step(self):
+    def advance_step(self) -> int:
         if self.stepping_forward:
             if self.current_step < self.last_step:
                 self.current_step = self.current_step + 1
@@ -43,13 +43,13 @@ class stepper:
                 self.current_step = self.last_step
         return self.current_step
 
-    def reverse(self):
+    def reverse(self) -> None:
         self.stepping_forward = not self.stepping_forward
 
-    def reset(self):
+    def reset(self) -> None:
         self.current_step = self.first_step
 
-    def adjust_range_start(self, adjustment):
+    def adjust_range_start(self, adjustment: int) -> None:
         # keep adjustment in the range where self.first_step >= 0 and
         # self.last_step < self.num_steps
         adjustment = max(adjustment, -self.first_step)
@@ -60,7 +60,7 @@ class stepper:
         # as is; advance_step() will move it into the right range
         # eventually. We might want to revisit this.
 
-    def adjust_range_length(self, adjustment):
+    def adjust_range_length(self, adjustment: int) -> None:
         # keep adjustment in the range where self.first_step <= self.last_step and
         # self.last_step < self.num_steps
         adjustment = max(adjustment, self.first_step - self.last_step)
@@ -71,15 +71,15 @@ class stepper:
         # eventually. We might want to revisit this.
 
 class drum:
-    def __init__(self, name, note, sequence):
+    def __init__(self, name: str, note: int, sequence: bitarray):
         self.name = name
         self.note = note
         self.sequence = sequence
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'drum({repr(self.name)},{repr(self.note)},{repr(self.sequence)})'
 
-    def play(self, midi, step):
+    def play(self, midi: usb_midi.PortOut, step: int) -> None:
         if self.sequence[step]:
             midi_msg_on = bytearray([0x99, self.note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
             midi_msg_off = bytearray([0x89, self.note, 0])
@@ -87,28 +87,28 @@ class drum:
             midi.write(midi_msg_off)
 
 class drum_set:
-    def __init__(self, midi, step_count):
+    def __init__(self, midi: usb_midi.PortOut, step_count: int):
         self.drums = []
         self.midi = midi
         self.step_count = step_count
     
-    def add_drum(self, name, note):
+    def add_drum(self, name: str, note: int) -> None:
         self.drums.append(drum(name, note, bitarray(self.step_count)))
 
-    def print_sequence(self):
+    def print_sequence(self) -> None:
         print("drums = [\n")
         for drum in self.drums:
             print(" " + repr(drum) + ",\n")
         print("]")
 
-    def play_step(self, step):
+    def play_step(self, step) -> None:
         for drum in self.drums:
             drum.play(self.midi, step)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.drums)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> drum:
         return self.drums[i]
 
     def __iter__(self):
@@ -124,20 +124,20 @@ class ticker:
     min_bpm = 10
     max_bpm = 400
 
-    def __init__(self, bpm):
+    def __init__(self, bpm: int):
         self.set_bpm(bpm)
         self.restart()
 
-    def restart(self):
+    def restart(self) -> None:
         self.next_step = ticks_ms()
 
-    def set_step_time(self, step_ms):
+    def set_step_time(self, step_ms: int) -> None:
         delta = step_ms - self.step_ms
         self.step_ms = step_ms
         self.next_step = ticks_add(self.next_step, delta)
         # TODO: what do we do if the next_time is now in the past?
     
-    def advance(self):
+    def advance(self) -> bool:
         if ticks_less(ticks_ms(), self.next_step):
             # it's not time to advance
             return False
@@ -145,13 +145,13 @@ class ticker:
         self.next_step = ticks_add(self.next_step, self.ms_per_step)
         return True
 
-    def set_bpm(self, bpm):
+    def set_bpm(self, bpm: int) -> None:
         self.bpm = min(max(bpm, ticker.min_bpm), ticker.max_bpm)
         seconds_per_beat = 60/bpm
         ms_per_beat = seconds_per_beat * 1000
         self.ms_per_step = ms_per_beat / ticker.steps_per_beat
 
-    def adjust_bpm(self, adjustment):
+    def adjust_bpm(self, adjustment: int) -> None:
         self.set_bpm(self.bpm + adjustment)
 
 ticker = ticker(120)
@@ -217,17 +217,17 @@ drums.add_drum("LTom", 41)
 drums.add_drum("MTom", 44)
 drums.add_drum("HTom", 56)
 
-def light_steps(drum, step, state):
+def light_steps(drum_index: int, step: int, state: bool):
     # pylint: disable=global-statement
     global leds, num_steps
     remap = [4, 5, 6, 7, 0, 1, 2, 3]
-    new_drum = 4 - drum
+    new_drum = 4 - drum_index
     new_step = remap[step]
     leds[new_drum * num_steps + new_step] = state
     if state:
-        print(f'drum{drum} step{step}: on')
+        print(f'drum{drum_index} step{step}: on')
     else:
-        print(f'drum{drum} step{step}: off')
+        print(f'drum{drum_index} step{step}: off')
 
 # format of the header in NVM for save_state/load_state:
 # < -- little-endian; lower bits are more significant
