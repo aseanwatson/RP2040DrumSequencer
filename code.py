@@ -189,10 +189,12 @@ encoder_pos = -hardware.encoder.position
 while True:
     hardware.start_button.update()
     if hardware.start_button.fell:  # pushed encoder button plays/stops transport
-        if playing is True:
+        # Toggle playing state
+        playing = not playing
+
+        if not playing:
             drums.print_sequence()
             save_state()
-        playing = not playing
         stepper.reset()
         ticker.restart()
         print("*** Play:", playing)
