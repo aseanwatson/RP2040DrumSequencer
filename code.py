@@ -81,9 +81,6 @@ playing = False
 
 hardware.leds.write_config(0)
 
-last_encoder_pos = 0
-encoder_pos = -hardware.encoder.position
-
 # default starting sequence
 drums = drum_set(hardware.midi, num_steps)
 drums.add_drum("Bass", 36)
@@ -186,6 +183,9 @@ for drum_index in range(len(drums)):
     for step_index in range(num_steps):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 hardware.leds.write()
+
+last_encoder_pos = 0
+encoder_pos = -hardware.encoder.position
 
 while True:
     hardware.start_button.update()
