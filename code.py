@@ -24,8 +24,6 @@ from drum import drum
 from drum_set import drum_set
 from ticker import ticker
 
-ticker = ticker(120)
-
 class hardware:
     def __init__(self):
         # define I2C
@@ -77,6 +75,7 @@ hardware = hardware()
 
 num_steps = 8  # number of steps/switches per row
 
+ticker = ticker(bpm = 120)
 stepper = stepper(num_steps)
 playing = False
 
