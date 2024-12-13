@@ -201,15 +201,6 @@ while True:
     if hardware.reverse_button.fell:
         stepper.reverse()
 
-    if playing:
-        if ticker.advance():
-            # TODO: how to display the current step? Separate LED?
-            drums.play_step(stepper.current_step)
-            stepper.advance_step()
-            encoder_pos = -hardware.encoder.position  # only check encoder while playing between steps
-    else:  # check the encoder all the time when not playing
-        encoder_pos = -hardware.encoder.position
-
     # switches add or remove steps
     switch = hardware.switches.events.get()
     if switch:
@@ -223,12 +214,24 @@ while True:
             light_steps(drum_index, step_index, drum.sequence[step_index])  # toggle light
             hardware.leds.write()
 
-    if encoder_pos != last_encoder_pos:
+    # TODO: I don't understand why we only want to check the encoder between steps
+    check_encoder = not playing
+
+    if playing:
+        if ticker.advance():
+            # TODO: how to display the current step? Separate LED?
+            drums.play_step(stepper.current_step)
+            stepper.advance_step()
+            check_encoder = True
+
+    if check_encoder:
+        encoder_pos = -hardware.encoder.position
         encoder_delta = encoder_pos - last_encoder_pos
-        ticker.adjust_bpm(encoder_delta)
-        hardware.display.fill(0)
-        hardware.display.print(ticker.bpm)
-        last_encoder_pos = encoder_pos
+        if encoder_delta != 0:
+            ticker.adjust_bpm(encoder_delta)
+            hardware.display.fill(0)
+            hardware.display.print(ticker.bpm)
+            last_encoder_pos = encoder_pos
 
  # suppresions:
  # type: ignore
