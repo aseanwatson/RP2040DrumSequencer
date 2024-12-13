@@ -72,14 +72,14 @@ class hardware:
         self.display = segments.Seg14x4(hardware.i2c, address=(0x70))
 
 hardware = hardware()
+hardware.leds.write_config(0)
+hardware.display.brightness = 0.3
 
 num_steps = 8  # number of steps/switches per row
 
 ticker = ticker(bpm = 120)
 stepper = stepper(num_steps)
 playing = False
-
-hardware.leds.write_config(0)
 
 # default starting sequence
 drums = drum_set(hardware.midi, num_steps)
@@ -156,7 +156,6 @@ def load_state() -> None:
 # try to load the state (no-op if NVM not valid)
 load_state()
 
-hardware.display.brightness = 0.3
 hardware.display.fill(0)
 hardware.display.show()
 hardware.display.print(ticker.bpm)
