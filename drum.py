@@ -27,6 +27,7 @@ class drum:
             midi.write(midi_msg_off)
 
 class drum_definition:
+    """drum_definition: Defines constants for well-known MIDI drum instruments"""
     def __init__(self, long_name: str, short_name: str, note: int):
         self.long_name = long_name
         self.short_name = short_name
