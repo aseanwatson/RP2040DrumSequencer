@@ -79,7 +79,6 @@ num_steps = 8  # number of steps/switches per row
 
 ticker = ticker(bpm = 120)
 stepper = stepper(num_steps)
-playing = False
 
 # default starting sequence
 drums = drum_set(hardware.midi, num_steps)
@@ -190,14 +189,13 @@ while True:
     hardware.start_button.update()
     if hardware.start_button.fell:  # pushed encoder button plays/stops transport
         # Toggle playing state
-        playing = not playing
+        ticker.toggle_playing()
 
-        if not playing:
+        if not ticker.playing:
             drums.print_sequence()
             save_state()
         stepper.reset()
-        ticker.restart()
-        print("*** Play:", playing)
+        print("*** Play:", ticker.playing)
 
     hardware.reverse_button.update()
     if hardware.reverse_button.fell:
@@ -217,9 +215,9 @@ while True:
             hardware.leds.write()
 
     # TODO: I don't understand why we only want to check the encoder between steps
-    check_encoder = not playing
+    check_encoder = not ticker.playing
 
-    if playing:
+    if ticker.playing:
         if ticker.advance():
             # TODO: how to display the current step? Separate LED?
             drums.play_step(stepper.current_step)

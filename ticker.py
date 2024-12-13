@@ -12,6 +12,21 @@ class ticker:
     def __init__(self, bpm: int):
         self.set_bpm(bpm)
         self.restart()
+        self.playing = False
+
+    def play(self):
+        if not self.playing():
+            self.playing = True
+            self.restart()
+
+    def pause(self):
+        self.playing = False
+
+    def toggle_playing(self):
+        if self.playing:
+            self.pause()
+        else:
+            self.play()
 
     def restart(self) -> None:
         self.next_step = ticks_ms()
