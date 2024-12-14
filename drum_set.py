@@ -15,9 +15,9 @@ class drum_set:
         self.add_custom_drum(name=definition.short_name, note=definition.note)
 
     def print_sequence(self) -> None:
-        print("drums = [\n")
+        print("drums = [")
         for drum in self.drums:
-            print(" " + repr(drum) + ",\n")
+            print(" " + repr(drum) + ",")
         print("]")
 
     def play_step(self, step) -> None:
