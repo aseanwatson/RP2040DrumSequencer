@@ -41,10 +41,14 @@ class TLC5916:
         time.sleep(0.00001)
         self.clk.value = False
 
-    def write(self):
-        for i in range(8*len(self.ba)):
-            self.sdi.value = self[i]
+    def write_byte(self, byte):
+        for i in range(8):
+            self.sdi.value = bool(byte & (1 << i))
             self.pulse_clock()
+
+    def write(self):
+        for byte in self.ba:
+            self.write_byte(byte)
         self.pulse_latch()
 
     def set_special_mode(self, val):
@@ -67,8 +71,6 @@ class TLC5916:
     def write_config(self, value):
         self.set_special_mode(True)
         for j in range(len(self.ba)):
-            for i in range(8):
-                self.sdi.value = bool(value & (1 << i))
-                self.pulse_clock()
+            self.write_byte(value)
         self.pulse_latch()
         self.set_special_mode(False)
