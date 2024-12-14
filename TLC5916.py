@@ -31,7 +31,7 @@ class TLC5916:
             return self.ba[index] & mask != 0
         return False
 
-    def latch(self):
+    def pulse_latch(self):
         self.le.value = True
         time.sleep(0.00001)
         self.le.value = False
@@ -41,7 +41,7 @@ class TLC5916:
             self.sdi.value = self[i]
             self.clk.value = True
             self.clk.value = False
-        self.latch()
+        self.pulse_latch()
 
     def set_special_mode(self, val):
         # see https://www.ti.com/lit/ds/symlink/tlc5916.pdf
@@ -69,5 +69,5 @@ class TLC5916:
                 self.sdi.value = bool(value & (1 << i))
                 self.clk.value = True
                 self.clk.value = False
-        self.latch()
+        self.pulse_latch()
         self.set_special_mode(False)
