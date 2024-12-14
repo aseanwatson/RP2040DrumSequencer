@@ -8,7 +8,6 @@
 # Uses General MIDI drum notes on channel 10
 # Range is note 35/B0 - 81/A4, but classic 808 set is defined here
 
-import time
 import board
 from digitalio import DigitalInOut, Pull
 import keypad
@@ -156,24 +155,8 @@ def load_state() -> None:
 load_state()
 
 hardware.display.fill(0)
-hardware.display.show()
 hardware.display.print(ticker.bpm)
 hardware.display.show()
-
-print("Drum Trigger 2040")
-
-
-hardware.display.fill(0)
-hardware.display.show()
-hardware.display.marquee("Drum", 0.05, loop=False)
-time.sleep(0.5)
-hardware.display.marquee("Trigger", 0.075, loop=False)
-time.sleep(0.5)
-hardware.display.marquee("2040", 0.05, loop=False)
-time.sleep(1)
-hardware.display.marquee("BPM", 0.05, loop=False)
-time.sleep(0.75)
-hardware.display.marquee(str(ticker.bpm), 0.1, loop=False)
 
 # light up initial LEDs
 for drum_index in range(len(drums)):
