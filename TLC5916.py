@@ -44,31 +44,22 @@ class TLC5916:
         self.latch()
 
     def set_special_mode(self, val):
-        self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = False
-        self.clk.value = True
-        time.sleep(0.00001)
-        self.clk.value = False
-        self.oe.value  = False
-        self.le.value  = False
-        self.clk.value = True
-        time.sleep(0.00001)
-        self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = False
-        self.clk.value = True
-        time.sleep(0.00001)
-        self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = val
-        self.clk.value = True
-        time.sleep(0.00001)
-        self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = False
-        self.clk.value = True
-        time.sleep(0.00001)
+        # see https://www.ti.com/lit/ds/symlink/tlc5916.pdf
+        # section 9.4.1
+        pairs = (
+            # OE    LE
+            (True,  False),
+            (False, False),
+            (True,  False),
+            (True,  val),
+            (True,  False),
+        )
+        for pair in pairs:
+            self.oe.value  = pair[0]
+            self.le.value  = pair[1]
+            self.clk.value = True
+            time.sleep(0.00001)
+            self.clk.value = False
         self.oe.value  = False
 
     def write_config(self, value):
