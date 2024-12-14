@@ -75,10 +75,7 @@ class TLC5916:
         self.set_special_mode(True)
         for j in range(len(self.ba)):
             for i in range(8):
-                if value & (1 << i) != 0:
-                    self.sdi.value = True
-                else:
-                    self.sdi.value = False
+                self.sdi.value = bool(value & (1 << i))
                 self.clk.value = True
                 self.clk.value = False
         self.latch()
