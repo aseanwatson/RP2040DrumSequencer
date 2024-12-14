@@ -5,16 +5,17 @@ class TLC5916:
     def index_mask(i):
         return (i // 8, 1 << (i % 8))
 
+    def get_digital_out(pin):
+        pin = digitalio.DigitalInOut(pin)
+        pin.direction = digitalio.Direction.OUTPUT
+        return pin
+
     def __init__(self, clk_pin, le_pin, sdi_pin, oe_pin, n):
         self.ba = bytearray(n)
-        self.clk = digitalio.DigitalInOut(clk_pin)
-        self.clk.direction = digitalio.Direction.OUTPUT
-        self.le = digitalio.DigitalInOut(le_pin)
-        self.le.direction = digitalio.Direction.OUTPUT
-        self.sdi = digitalio.DigitalInOut(sdi_pin)
-        self.sdi.direction = digitalio.Direction.OUTPUT
-        self.oe = digitalio.DigitalInOut(oe_pin)
-        self.oe.direction = digitalio.Direction.OUTPUT
+        self.clk = TLC5916.get_digital_out(clk_pin)
+        self.le = TLC5916.get_digital_out(le_pin)
+        self.sdi = TLC5916.get_digital_out(sdi_pin)
+        self.oe = TLC5916.get_digital_out(oe_pin)
         self.oe.value = False
 
     def __setitem__(self, i, b):
