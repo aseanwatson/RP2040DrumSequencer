@@ -36,11 +36,15 @@ class TLC5916:
         time.sleep(0.00001)
         self.le.value = False
 
+    def pulse_clock(self):
+        self.clk.value = True
+        time.sleep(0.00001)
+        self.clk.value = False
+
     def write(self):
         for i in range(8*len(self.ba)):
             self.sdi.value = self[i]
-            self.clk.value = True
-            self.clk.value = False
+            self.pulse_clock()
         self.pulse_latch()
 
     def set_special_mode(self, val):
@@ -57,9 +61,7 @@ class TLC5916:
         for pair in pairs:
             self.oe.value  = pair[0]
             self.le.value  = pair[1]
-            self.clk.value = True
-            time.sleep(0.00001)
-            self.clk.value = False
+            self.pulse_clock()
         self.oe.value  = False
 
     def write_config(self, value):
@@ -67,7 +69,6 @@ class TLC5916:
         for j in range(len(self.ba)):
             for i in range(8):
                 self.sdi.value = bool(value & (1 << i))
-                self.clk.value = True
-                self.clk.value = False
+                self.pulse_clock()
         self.pulse_latch()
         self.set_special_mode(False)
