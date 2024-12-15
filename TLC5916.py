@@ -145,16 +145,18 @@ class TLC5916:
             raise ValueError(f'set_target_current({value}, {effective_R_ext}) cannot produce a current that high')
 
         config_value = 0
+        if (D >> 5) & 1:
+            config_value |= 0b00000001
         if (D >> 4) & 1:
-            config_value |= 0b0000001
+            config_value |= 0b00000010
         if (D >> 3) & 1:
-            config_value |= 0b0000010
+            config_value |= 0b00000100
         if (D >> 2) & 1:
-            config_value |= 0b0000100
+            config_value |= 0b00001000
         if (D >> 1) & 1:
-            config_value |= 0b0001000
+            config_value |= 0b00010000
         if (D >> 0) & 1:
-            config_value |= 0b0010000
+            config_value |= 0b00100000
         config_value |= HC << 6 | CM << 7
 
         return self.write_config(config_value)
