@@ -54,7 +54,7 @@ class TLC5916:
         
         It sends bit 0 first (little endian)."""
         for i in range(8):
-            self.sdi.value = bool(byte & (1 << (7-i)))
+            self.sdi.value = bool(byte & (1 << i))
             self.pulse_clock()
 
     def write(self):

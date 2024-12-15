@@ -38,7 +38,8 @@ class hardware:
             sdi_pin = board.D3,
             clk_pin = board.D2,
             le_pin = board.D4,
-            n = 5)
+            n = 5,
+            R_ext=400) # this is what I told Remi to add, but it should be bigger
 
         # STEMMA QT Rotary encoder setup
         rotary_seesaw = seesaw.Seesaw(hardware.i2c, addr=0x36)  # default address is 0x36
