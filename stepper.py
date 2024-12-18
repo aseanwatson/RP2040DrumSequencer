@@ -34,7 +34,7 @@ class stepper:
         
         Ensures we keep the range valid; first_step can't be < 0 and last_step can't be >= num_steps."""
         adjustment = max(adjustment, -self.first_step)
-        adjustment = min(adjustment, self.last_step - 1 - self.num_steps)
+        adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
         self.first_step += adjustment
         self.last_step += adjustment
         # TODO: self.current_step might be out of range; leave that
@@ -46,7 +46,7 @@ class stepper:
         
         Ensures we keep the range valid; last_step can't be < first_step and last_step can't be >= num_steps."""
         adjustment = max(adjustment, self.first_step - self.last_step)
-        adjustment = min(adjustment, self.last_step - 1 - self.num_steps)
+        adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
         self.last_step += adjustment
          # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
