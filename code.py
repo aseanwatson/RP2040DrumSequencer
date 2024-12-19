@@ -112,6 +112,8 @@ for drum_index in range(len(drums)):
 hardware.leds.write()
 
 last_tempo_encoder_pos = hardware.tempo_encoder.position
+last_step_shift_encoder_pos = hardware.step_shift_encoder.position
+last_pattern_length_encoder_pos = hardware.pattern_length_encoder.position
 
 while True:
     hardware.start_button.update()
@@ -160,6 +162,18 @@ while True:
             hardware.display.fill(0)
             hardware.display.print(ticker.bpm)
             last_tempo_encoder_pos = tempo_encoder_pos
+
+        step_shift_encoder_pos = hardware.step_shift_encoder.position
+        step_shift_encoder_delta = last_step_shift_encoder_pos - step_shift_encoder_pos
+        if step_shift_encoder_delta != 0:
+            stepper.adjust_range_start(step_shift_encoder_delta)
+            last_step_shift_encoder_pos = step_shift_encoder_pos
+
+        pattern_length_encoder_pos = hardware.pattern_length_encoder.position
+        pattern_length_encoder_delta = last_pattern_length_encoder_pos - pattern_length_encoder_pos
+        if pattern_length_encoder_delta != 0:
+            stepper.adjust_range_length(pattern_length_encoder_delta)
+            last_pattern_length_encoder_pos = pattern_length_encoder_pos
 
  # suppresions:
  # type: ignore

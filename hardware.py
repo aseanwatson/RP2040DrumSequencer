@@ -53,6 +53,10 @@ class hardware:
         knobbutton_in = digitalio.DigitalIO(rotary_seesaw, 24)  # use seesaw digitalio
         self.knobbutton = Debouncer(knobbutton_in)  # create debouncer object for button
 
+        rotary_seesaw2 = seesaw.Seesaw(self.i2c, addr=0x49)  # default address is 0x36
+        self.pattern_length_encoder = rotaryio.IncrementalEncoder(rotary_seesaw2, 1)
+        self.step_shift_encoder = rotaryio.IncrementalEncoder(rotary_seesaw2, 3)
+
         # MIDI setup
         self.midi = usb_midi.ports[1]
 
@@ -172,6 +176,9 @@ class seans_hardware:
         self.tempo_encoder = fake_IncrementalEncoder()
         knobbutton_in = fake_DigitalInOut()
         self.knobbutton = Debouncer(knobbutton_in)  # create debouncer object for button
+
+        self.pattern_length_encoder = fake_IncrementalEncoder()
+        self.step_shift_encoder = fake_IncrementalEncoder()
 
         # MIDI setup
         self.midi = usb_midi.ports[1]
