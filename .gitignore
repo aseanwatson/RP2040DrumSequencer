@@ -1,2 +1,4 @@
 .vscode/
 lib/
+__pycache__/stepper.cpython-38.pyc
+__pycache__/stepper.cpython-311.pyc
