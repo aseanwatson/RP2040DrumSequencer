@@ -111,7 +111,7 @@ for drum_index in range(len(drums)):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 hardware.leds.write()
 
-last_encoder_pos = hardware.encoder.position
+last_tempo_encoder_pos = hardware.tempo_encoder.position
 
 while True:
     hardware.start_button.update()
@@ -153,13 +153,13 @@ while True:
             check_encoder = True
 
     if check_encoder:
-        encoder_pos = hardware.encoder.position
-        encoder_delta = last_encoder_pos - encoder_pos
-        if encoder_delta != 0:
-            ticker.adjust_bpm(encoder_delta)
+        tempo_encoder_pos = hardware.tempo_encoder.position
+        tempo_encoder_delta = last_tempo_encoder_pos - tempo_encoder_pos
+        if tempo_encoder_delta != 0:
+            ticker.adjust_bpm(tempo_encoder_delta)
             hardware.display.fill(0)
             hardware.display.print(ticker.bpm)
-            last_encoder_pos = encoder_pos
+            last_tempo_encoder_pos = tempo_encoder_pos
 
  # suppresions:
  # type: ignore

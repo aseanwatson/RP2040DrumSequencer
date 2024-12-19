@@ -47,7 +47,7 @@ class hardware:
 
         # STEMMA QT Rotary encoder setup
         rotary_seesaw = seesaw.Seesaw(hardware.i2c, addr=0x36)  # default address is 0x36
-        self.encoder = rotaryio.IncrementalEncoder(rotary_seesaw)
+        self.tempo_encoder = rotaryio.IncrementalEncoder(rotary_seesaw)
 
         rotary_seesaw.pin_mode(24, rotary_seesaw.INPUT_PULLUP)  # setup the button pin
         knobbutton_in = digitalio.DigitalIO(rotary_seesaw, 24)  # use seesaw digitalio
@@ -169,7 +169,7 @@ class seans_hardware:
             R_ext= 1100, # two 2.2K resistors in parallel
             n = 2)
 
-        self.encoder = fake_IncrementalEncoder()
+        self.tempo_encoder = fake_IncrementalEncoder()
         knobbutton_in = fake_DigitalInOut()
         self.knobbutton = Debouncer(knobbutton_in)  # create debouncer object for button
 
