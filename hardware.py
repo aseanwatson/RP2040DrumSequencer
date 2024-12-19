@@ -46,7 +46,7 @@ class hardware:
             R_ext=400) # this is what I told Remi to add, but it should be bigger
 
         # STEMMA QT Rotary encoder setup
-        rotary_seesaw = seesaw.Seesaw(hardware.i2c, addr=0x36)  # default address is 0x36
+        rotary_seesaw = seesaw.Seesaw(self.i2c, addr=0x36)  # default address is 0x36
         self.tempo_encoder = rotaryio.IncrementalEncoder(rotary_seesaw)
 
         rotary_seesaw.pin_mode(24, rotary_seesaw.INPUT_PULLUP)  # setup the button pin
