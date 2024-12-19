@@ -15,6 +15,7 @@ from drum import drum, BassDrum, AcousticSnare, LowFloorTom, PedalHiHat, CowBell
 from drum_set import drum_set
 from ticker import ticker
 from hardware import hardware
+from relative_encoder import relative_encoder
 
 hardware = hardware()
 hardware.leds.write_config(0)
@@ -111,9 +112,9 @@ for drum_index in range(len(drums)):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 hardware.leds.write()
 
-last_tempo_encoder_pos = hardware.tempo_encoder.position
-last_step_shift_encoder_pos = hardware.step_shift_encoder.position
-last_pattern_length_encoder_pos = hardware.pattern_length_encoder.position
+tempo_encoder = relative_encoder(hardware.tempo_encoder)
+step_shift_encoder = relative_encoder(hardware.step_shift_encoder)
+pattern_length_encoder = relative_encoder(hardware.pattern_length_encoder)
 
 while True:
     hardware.start_button.update()
@@ -155,25 +156,19 @@ while True:
             check_encoder = True
 
     if check_encoder:
-        tempo_encoder_pos = hardware.tempo_encoder.position
-        tempo_encoder_delta = last_tempo_encoder_pos - tempo_encoder_pos
+        tempo_encoder_delta = tempo_encoder.read_value()
         if tempo_encoder_delta != 0:
             ticker.adjust_bpm(tempo_encoder_delta)
             hardware.display.fill(0)
             hardware.display.print(ticker.bpm)
-            last_tempo_encoder_pos = tempo_encoder_pos
 
-        step_shift_encoder_pos = hardware.step_shift_encoder.position
-        step_shift_encoder_delta = last_step_shift_encoder_pos - step_shift_encoder_pos
+        step_shift_encoder_delta = step_shift_encoder.read_value()
         if step_shift_encoder_delta != 0:
             stepper.adjust_range_start(step_shift_encoder_delta)
-            last_step_shift_encoder_pos = step_shift_encoder_pos
 
-        pattern_length_encoder_pos = hardware.pattern_length_encoder.position
-        pattern_length_encoder_delta = last_pattern_length_encoder_pos - pattern_length_encoder_pos
+        pattern_length_encoder_delta = pattern_length_encoder.read_value()
         if pattern_length_encoder_delta != 0:
             stepper.adjust_range_length(pattern_length_encoder_delta)
-            last_pattern_length_encoder_pos = pattern_length_encoder_pos
 
  # suppresions:
  # type: ignore
