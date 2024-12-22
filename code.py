@@ -48,11 +48,21 @@ class sequencer:
         else:
             print(f'drum{drum_index} step{step}: off')
 
-    def save_state(self) -> None:
+    def get_save_length(self) -> int:
         length = sequencer.nvm_header.size
         for drum in self.drums:
             length += drum.sequence.bytelen()
+        return length
+
+    def save_state_to_nvm(self) -> None:
+        length = self.get_save_length()
         bytes = bytearray(length)
+        self.save_state_to_bytes(bytes)
+        # in one update, write the saved bytes
+        # to nonvolatile memory
+        microcontroller.nvm[0:length] = bytes
+
+    def save_state_to_bytes(self, bytes) -> None:
         sequencer.nvm_header.pack_into(
             bytes,
             0,
@@ -63,12 +73,14 @@ class sequencer:
         for drum in self.drums:
             drum.sequence.save(bytes, index)
             index += drum.sequence.bytelen()
-        # in one update, write the saved bytes
-        # to nonvolatile memory
-        microcontroller.nvm[0:length] = bytes
 
-    def load_state(self) -> None:
-        header = sequencer.nvm_header.unpack_from(microcontroller.nvm[0:sequencer.nvm_header.size])
+    def load_state_from_nvm(self) -> None:
+        length = self.get_save_length()
+        bytes = microcontroller.nvm[0:length]
+        self.load_state_from_bytes(bytes)
+    
+    def load_state_from_bytes(self, bytes) -> None:
+        header = sequencer.nvm_header.unpack_from(bytes[0:sequencer.nvm_header.size])
         if header[0] != sequencer.nvm_header.magic_number or header[1] == 0 or header[2] == 0:
             return
         self.stepper.num_steps = header[1]
@@ -76,7 +88,7 @@ class sequencer:
         index = sequencer.nvm_header.size
         for drum in self.drums:
             seq = drum.sequence
-            seq.load(microcontroller.nvm[index:index+seq.bytelen()])
+            seq.load(bytes[index:index+seq.bytelen()])
             index += seq.bytelen()
         self.ticker.set_bpm(newbpm)
 
@@ -102,7 +114,7 @@ class sequencer:
         self.drums.add_drum(drum.CowBell)
 
         # try to load the state (no-op if NVM not valid)
-        self.load_state()
+        self.load_state_from_nvm()
 
         self.hardware.display.fill(0)
         self.hardware.display.print(self.ticker.bpm)
@@ -123,7 +135,7 @@ class sequencer:
 
             if not self.ticker.playing:
                 self.drums.print_sequence()
-                self.save_state()
+                self.save_state_to_nvm()
             self.stepper.reset()
             print("*** Play:", self.ticker.playing)
 
