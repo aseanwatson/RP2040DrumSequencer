@@ -81,10 +81,10 @@ class sequencer:
         self.ticker.set_bpm(header.bpm)
         return index - offset
 
-    def __init__(self) -> None:
+    def __init__(self, bpm) -> None:
         num_steps = 8  # number of steps/switches per row
         self.hardware = hardware.hardware()
-        self.ticker = ticker.ticker(bpm = 120)
+        self.ticker = ticker.ticker(bpm)
         self.stepper = stepper.stepper(num_steps)
         self.drums = drum_set.drum_set(self.hardware.midi, num_steps)
         self.tempo_encoder = relative_encoder.relative_encoder(self.hardware.tempo_encoder)
@@ -171,7 +171,7 @@ class sequencer:
             if pattern_length_encoder_delta != 0:
                 self.stepper.adjust_range_length(pattern_length_encoder_delta)
 
-sequencer = sequencer()
+sequencer = sequencer(bpm=120)
 sequencer.setup()
 while True:
     sequencer.run_main_loop()
