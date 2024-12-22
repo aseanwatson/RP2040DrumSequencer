@@ -28,10 +28,43 @@ class sequencer:
         """magic_number should change if load/save logic changes in and incompatible way"""
         magic_number = 0x02
         size = struct.calcsize(format)
-        def pack_into(buffer, offset, *v):
-            struct.pack_into(sequencer.nvm_header.format, buffer, offset, *v)
-        def unpack_from(buffer, offset = 0):
-            return struct.unpack_from(sequencer.nvm_header.format, buffer, offset)
+        def __init__(self, drum_count, step_count, bpm) -> None:
+            self.magic_number = sequencer.nvm_header.magic_number
+            self.drum_count = drum_count
+            self.step_count = step_count
+            self.bpm = bpm
+
+        def get_save_length(self) -> int:
+            return sequencer.nvm_header.size
+
+        def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
+            index = offset
+            values = struct.unpack_from(sequencer.nvm_header.format, buffer = bytes, offset = index)
+            index += sequencer.nvm_header.size
+            # TODO: This should be a more specific exception
+            if self.magic_number != values[0]:
+                raise ValueError("bad magic number")
+            if self.drum_count != values[1]:
+                raise ValueError("bad drum_count")
+            if self.step_count != values[2]:
+                raise ValueError("bad step_count")
+            self.bpm = values[3]
+            return index - offset
+
+        def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
+            index = offset
+            struct.pack_into(
+                sequencer.nvm_header.format,
+                bytes,
+                index,
+                sequencer.nvm_header.magic_number,
+                self.drum_count,
+                self.step_count,
+                self.bpm)
+            index += sequencer.nvm_header.size
+            return index - offset
+
+
 
     def refresh_step_led(self, drum_index: int, step: int, state: bool):
         remap = [4, 5, 6, 7, 0, 1, 2, 3]
@@ -63,13 +96,12 @@ class sequencer:
         the offset parameter is given, uses that as an offset
         to store the state.
         """
-        sequencer.nvm_header.pack_into(
-            bytes,
-            offset,
-            sequencer.nvm_header.magic_number,
+        index = offset
+        header = sequencer.nvm_header(
+            len(self.drums),
             self.stepper.num_steps,
             self.ticker.bpm)
-        index = offset + sequencer.nvm_header.size
+        index += header.save_state_to_bytes(bytes, index)
         index += self.drums.save_state_to_bytes(bytes, index)
         return index - offset
 
@@ -84,17 +116,14 @@ class sequencer:
         the offset parameter is given, uses that as an offset
         to read the state.
         """
-        header = sequencer.nvm_header.unpack_from(bytes[0:sequencer.nvm_header.size], offset)
-        if header[0] != sequencer.nvm_header.magic_number:
-            return
-        if header[1] != self.stepper.num_steps:
-            return
-        if header[2] == 0:
-            return
-        newbpm = header[2]
-        index = offset + sequencer.nvm_header.size
+        index = offset
+        header = sequencer.nvm_header(
+            len(self.drums),
+            self.stepper.num_steps,
+            self.ticker.bpm)
+        index += header.load_state_from_bytes(bytes, index)
         index += self.drums.load_state_from_bytes()
-        self.ticker.set_bpm(newbpm)
+        self.ticker.set_bpm(header.bpm)
         return index - offset
 
     def __init__(self) -> None:
@@ -119,7 +148,11 @@ class sequencer:
         self.drums.add_drum(drum.CowBell)
 
         # try to load the state (no-op if NVM not valid)
-        self.load_state_from_nvm()
+        try:
+            self.load_state_from_nvm()
+        # TODO: This should be a specific exception
+        except ValueError:
+            pass
 
         self.hardware.display.fill(0)
         self.hardware.display.print(self.ticker.bpm)
