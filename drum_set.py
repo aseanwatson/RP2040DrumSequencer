@@ -40,3 +40,31 @@ class drum_set:
     def __iter__(self):
         """__iter__(): lets the for keywork work on a drum_set, gets each drum in the set."""
         return iter(self.drums)
+
+    def get_save_length(self) -> int:
+        length = 0
+        for drum in self.drums:
+            length += drum.get_save_length()
+        return length
+
+    def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
+        """
+        Stores the state of the drum_set in a bytearray; if
+        the offset parameter is given, uses that as an offset
+        to store the state.
+        """
+        index = offset
+        for drum in self.drums:
+            index += drum.save_state_to_bytes(bytes, index)
+        return offset - index
+
+    def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
+        """
+        Retrieves the state of the drum_set from a bytearray; if
+        the offset parameter is given, uses that as an offset
+        to read the state.
+        """
+        index = offset
+        for drum in self.drums:
+            index += drum.load_state_from_bytes(self, index)
+        return offset - index

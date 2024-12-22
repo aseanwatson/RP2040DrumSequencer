@@ -26,6 +26,30 @@ class drum:
             midi.write(midi_msg_on)
             midi.write(midi_msg_off)
 
+    def get_save_length(self) -> int:
+        return self.sequence.get_save_length()
+
+    def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
+        """
+        Stores the state of the drum in a bytearray; if
+        the offset parameter is given, uses that as an offset
+        to store the state.
+        """
+        index = offset
+        index += self.sequence.save_state_to_bytes(bytes, index)
+        return offset - index
+
+    def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
+        """
+        Retrieves the state of the drum from a bytearray; if
+        the offset parameter is given, uses that as an offset
+        to read the state.
+        """
+        index = offset
+        seq = self.sequence
+        index += seq.load_state_from_bytes(bytes, index)
+        return offset - index
+
 class drum_definition:
     """drum_definition: Defines constants for well-known MIDI drum instruments"""
     def __init__(self, long_name: str, short_name: str, note: int):

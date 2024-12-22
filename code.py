@@ -63,6 +63,11 @@ class sequencer:
         microcontroller.nvm[0:length] = bytes
 
     def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
+        """
+        Stores the state of the sequencer in a bytearray; if
+        the offset parameter is given, uses that as an offset
+        to store the state.
+        """
         sequencer.nvm_header.pack_into(
             bytes,
             offset,
@@ -70,9 +75,7 @@ class sequencer:
             self.stepper.num_steps,
             self.ticker.bpm)
         index = offset + sequencer.nvm_header.size
-        for drum in self.drums:
-            drum.sequence.save(bytes, index)
-            index += drum.sequence.bytelen()
+        index += self.drums.save_state_to_bytes(bytes, index)
         return index - offset
 
     def load_state_from_nvm(self) -> None:
@@ -80,7 +83,12 @@ class sequencer:
         bytes = microcontroller.nvm[0:length]
         self.load_state_from_bytes(bytes)
     
-    def load_state_from_bytes(self, bytes, offset: int = 0) -> None:
+    def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
+        """
+        Retrieves the state of the sequencer from a bytearray; if
+        the offset parameter is given, uses that as an offset
+        to read the state.
+        """
         header = sequencer.nvm_header.unpack_from(bytes[0:sequencer.nvm_header.size], offset)
         if header[0] != sequencer.nvm_header.magic_number:
             return
@@ -90,10 +98,7 @@ class sequencer:
             return
         newbpm = header[2]
         index = offset + sequencer.nvm_header.size
-        for drum in self.drums:
-            seq = drum.sequence
-            seq.load(bytes[index:index+seq.bytelen()])
-            index += seq.bytelen()
+        index += self.drums.load_state_from_bytes()
         self.ticker.set_bpm(newbpm)
         return index - offset
 
