@@ -64,8 +64,6 @@ class sequencer:
             index += sequencer.nvm_header.size
             return index - offset
 
-
-
     def refresh_step_led(self, drum_index: int, step: int, state: bool):
         remap = [4, 5, 6, 7, 0, 1, 2, 3]
         new_drum = 4 - drum_index
