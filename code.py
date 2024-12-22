@@ -33,7 +33,7 @@ class sequencer:
         def unpack_from(buffer, offset = 0):
             return struct.unpack_from(sequencer.nvm_header.format, buffer, offset)
 
-    def light_steps(self, drum_index: int, step: int, state: bool):
+    def refresh_step_led(self, drum_index: int, step: int, state: bool):
         # pylint: disable=global-statement
         remap = [4, 5, 6, 7, 0, 1, 2, 3]
         new_drum = 4 - drum_index
@@ -130,7 +130,7 @@ class sequencer:
         for drum_index in range(len(self.drums)):
             drum = self.drums[drum_index]
             for step_index in range(self.stepper.num_steps):
-                self.light_steps(drum_index, step_index, drum.sequence[step_index])
+                self.refresh_step_led(drum_index, step_index, drum.sequence[step_index])
         self.hardware.leds.write()
 
     def run_main_loop(self) -> None:
@@ -159,7 +159,7 @@ class sequencer:
                 step_index = i % self.stepper.num_steps
                 drum = self.drums[drum_index]
                 drum.sequence.toggle(step_index) # toggle step
-                self.light_steps(drum_index, step_index, drum.sequence[step_index])  # toggle light
+                self.refresh_step_led(drum_index, step_index, drum.sequence[step_index])  # toggle light
                 self.hardware.leds.write()
 
         # TODO: I don't understand why we only want to check the encoder between steps
