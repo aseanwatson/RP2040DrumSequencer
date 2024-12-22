@@ -62,25 +62,26 @@ class sequencer:
         # to nonvolatile memory
         microcontroller.nvm[0:length] = bytes
 
-    def save_state_to_bytes(self, bytes) -> None:
+    def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
         sequencer.nvm_header.pack_into(
             bytes,
-            0,
+            offset,
             sequencer.nvm_header.magic_number,
             self.stepper.num_steps,
             self.ticker.bpm)
-        index = sequencer.nvm_header.size
+        index = offset + sequencer.nvm_header.size
         for drum in self.drums:
             drum.sequence.save(bytes, index)
             index += drum.sequence.bytelen()
+        return index - offset
 
     def load_state_from_nvm(self) -> None:
         length = self.get_save_length()
         bytes = microcontroller.nvm[0:length]
         self.load_state_from_bytes(bytes)
     
-    def load_state_from_bytes(self, bytes) -> None:
-        header = sequencer.nvm_header.unpack_from(bytes[0:sequencer.nvm_header.size])
+    def load_state_from_bytes(self, bytes, offset: int = 0) -> None:
+        header = sequencer.nvm_header.unpack_from(bytes[0:sequencer.nvm_header.size], offset)
         if header[0] != sequencer.nvm_header.magic_number:
             return
         if header[1] != self.stepper.num_steps:
@@ -88,12 +89,13 @@ class sequencer:
         if header[2] == 0:
             return
         newbpm = header[2]
-        index = sequencer.nvm_header.size
+        index = offset + sequencer.nvm_header.size
         for drum in self.drums:
             seq = drum.sequence
             seq.load(bytes[index:index+seq.bytelen()])
             index += seq.bytelen()
         self.ticker.set_bpm(newbpm)
+        return index - offset
 
     def __init__(self) -> None:
         num_steps = 8  # number of steps/switches per row
