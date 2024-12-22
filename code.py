@@ -8,31 +8,31 @@
 # Uses General MIDI drum notes on channel 10
 # Range is note 35/B0 - 81/A4, but classic 808 set is defined here
 
-from stepper import stepper
+import stepper
 import struct
 import microcontroller
-from drum import drum, BassDrum, AcousticSnare, LowFloorTom, PedalHiHat, CowBell
-from drum_set import drum_set
-from ticker import ticker
-from hardware import hardware
-from relative_encoder import relative_encoder
+import drum
+import drum_set
+import ticker
+import hardware
+import relative_encoder
 
-hardware = hardware()
+hardware = hardware.hardware()
 hardware.leds.write_config(0)
 hardware.display.brightness = 0.3
 
 num_steps = 8  # number of steps/switches per row
 
-ticker = ticker(bpm = 120)
-stepper = stepper(num_steps)
+ticker = ticker.ticker(bpm = 120)
+stepper = stepper.stepper(num_steps)
 
 # default starting sequence
-drums = drum_set(hardware.midi, num_steps)
-drums.add_drum(BassDrum)
-drums.add_drum(AcousticSnare)
-drums.add_drum(LowFloorTom)
-drums.add_drum(PedalHiHat)
-drums.add_drum(CowBell)
+drums = drum_set.drum_set(hardware.midi, num_steps)
+drums.add_drum(drum.BassDrum)
+drums.add_drum(drum.AcousticSnare)
+drums.add_drum(drum.LowFloorTom)
+drums.add_drum(drum.PedalHiHat)
+drums.add_drum(drum.CowBell)
 
 def light_steps(drum_index: int, step: int, state: bool):
     # pylint: disable=global-statement
@@ -112,9 +112,9 @@ for drum_index in range(len(drums)):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 hardware.leds.write()
 
-tempo_encoder = relative_encoder(hardware.tempo_encoder)
-step_shift_encoder = relative_encoder(hardware.step_shift_encoder)
-pattern_length_encoder = relative_encoder(hardware.pattern_length_encoder)
+tempo_encoder = relative_encoder.relative_encoder(hardware.tempo_encoder)
+step_shift_encoder = relative_encoder.relative_encoder(hardware.step_shift_encoder)
+pattern_length_encoder = relative_encoder.relative_encoder(hardware.pattern_length_encoder)
 
 while True:
     hardware.start_button.update()
