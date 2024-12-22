@@ -81,9 +81,12 @@ class sequencer:
     
     def load_state_from_bytes(self, bytes) -> None:
         header = sequencer.nvm_header.unpack_from(bytes[0:sequencer.nvm_header.size])
-        if header[0] != sequencer.nvm_header.magic_number or header[1] == 0 or header[2] == 0:
+        if header[0] != sequencer.nvm_header.magic_number:
             return
-        self.stepper.num_steps = header[1]
+        if header[1] != self.stepper.num_steps:
+            return
+        if header[2] == 0:
+            return
         newbpm = header[2]
         index = sequencer.nvm_header.size
         for drum in self.drums:
