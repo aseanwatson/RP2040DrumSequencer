@@ -16,54 +16,54 @@ import ticker
 import hardware
 import relative_encoder
 
+class nvm_header:
+    """format of the header in NVM for save_state/load_state:
+        < -- little-endian; lower bits are more significant
+        B -- magic number
+        B -- number of drums (unsigned byte: 0 - 255)
+        B -- number of steps (unsigned byte: 0 - 255)
+        H -- BPM beats per minute (unsigned short: 0 - 65536)"""
+    format = b'<BBH'
+    """magic_number should change if load/save logic changes in and incompatible way"""
+    magic_number = 0x02
+    size = struct.calcsize(format)
+    def __init__(self, drum_count, step_count, bpm) -> None:
+        self.magic_number = nvm_header.magic_number
+        self.drum_count = drum_count
+        self.step_count = step_count
+        self.bpm = bpm
+
+    def get_save_length(self) -> int:
+        return nvm_header.size
+
+    def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
+        index = offset
+        values = struct.unpack_from(nvm_header.format, buffer = bytes, offset = index)
+        index += nvm_header.size
+        # TODO: This should be a more specific exception
+        if self.magic_number != values[0]:
+            raise ValueError("bad magic number")
+        if self.drum_count != values[1]:
+            raise ValueError("bad drum_count")
+        if self.step_count != values[2]:
+            raise ValueError("bad step_count")
+        self.bpm = values[3]
+        return index - offset
+
+    def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
+        index = offset
+        struct.pack_into(
+            nvm_header.format,
+            bytes,
+            index,
+            nvm_header.magic_number,
+            self.drum_count,
+            self.step_count,
+            self.bpm)
+        index += nvm_header.size
+        return index - offset
+
 class sequencer:
-    class nvm_header:
-        """format of the header in NVM for save_state/load_state:
-            < -- little-endian; lower bits are more significant
-            B -- magic number
-            B -- number of drums (unsigned byte: 0 - 255)
-            B -- number of steps (unsigned byte: 0 - 255)
-            H -- BPM beats per minute (unsigned short: 0 - 65536)"""
-        format = b'<BBH'
-        """magic_number should change if load/save logic changes in and incompatible way"""
-        magic_number = 0x02
-        size = struct.calcsize(format)
-        def __init__(self, drum_count, step_count, bpm) -> None:
-            self.magic_number = sequencer.nvm_header.magic_number
-            self.drum_count = drum_count
-            self.step_count = step_count
-            self.bpm = bpm
-
-        def get_save_length(self) -> int:
-            return sequencer.nvm_header.size
-
-        def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
-            index = offset
-            values = struct.unpack_from(sequencer.nvm_header.format, buffer = bytes, offset = index)
-            index += sequencer.nvm_header.size
-            # TODO: This should be a more specific exception
-            if self.magic_number != values[0]:
-                raise ValueError("bad magic number")
-            if self.drum_count != values[1]:
-                raise ValueError("bad drum_count")
-            if self.step_count != values[2]:
-                raise ValueError("bad step_count")
-            self.bpm = values[3]
-            return index - offset
-
-        def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
-            index = offset
-            struct.pack_into(
-                sequencer.nvm_header.format,
-                bytes,
-                index,
-                sequencer.nvm_header.magic_number,
-                self.drum_count,
-                self.step_count,
-                self.bpm)
-            index += sequencer.nvm_header.size
-            return index - offset
-
     def refresh_step_led(self, drum_index: int, step: int, state: bool):
         remap = [4, 5, 6, 7, 0, 1, 2, 3]
         new_drum = 4 - drum_index
@@ -80,7 +80,7 @@ class sequencer:
         self.hardware.display.show()
 
     def get_save_length(self) -> int:
-        length = sequencer.nvm_header.size
+        length = nvm_header.size
         for drum in self.drums:
             length += drum.sequence.bytelen()
         return length
@@ -100,7 +100,7 @@ class sequencer:
         to store the state.
         """
         index = offset
-        header = sequencer.nvm_header(
+        header = nvm_header(
             len(self.drums),
             self.stepper.num_steps,
             self.ticker.bpm)
@@ -120,7 +120,7 @@ class sequencer:
         to read the state.
         """
         index = offset
-        header = sequencer.nvm_header(
+        header = nvm_header(
             len(self.drums),
             self.stepper.num_steps,
             self.ticker.bpm)
