@@ -34,8 +34,7 @@ class sequencer:
 
     def get_save_length(self) -> int:
         length = file_header.file_header.size
-        for drum in self.drums:
-            length += drum.sequence.bytelen()
+        length += self.drums.get_save_length()
         return length
 
     def save_state_to_nvm(self) -> None:
