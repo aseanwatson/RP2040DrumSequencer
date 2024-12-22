@@ -11,6 +11,7 @@
 import stepper
 import microcontroller
 import drum_set
+import drum
 import ticker
 import hardware
 import relative_encoder
