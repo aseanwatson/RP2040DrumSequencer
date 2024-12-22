@@ -17,18 +17,15 @@ import hardware
 import relative_encoder
 
 class sequencer:
-    # classes
-    # format of the header in NVM for save_state/load_state:
-    # < -- little-endian; lower bits are more significant
-    # B -- magic number
-    # B -- number of drums (unsigned byte: 0 - 255)
-    # B -- number of steps (unsigned byte: 0 - 255)
-    # H -- BPM beats per minute (unsigned short: 0 - 65536)
-
-    # this number should change if load/save logic changes in
-    # and incompatible way
     class nvm_header:
+        """format of the header in NVM for save_state/load_state:
+            < -- little-endian; lower bits are more significant
+            B -- magic number
+            B -- number of drums (unsigned byte: 0 - 255)
+            B -- number of steps (unsigned byte: 0 - 255)
+            H -- BPM beats per minute (unsigned short: 0 - 65536)"""
         format = b'<BBH'
+        """magic_number should change if load/save logic changes in and incompatible way"""
         magic_number = 0x02
         size = struct.calcsize(format)
         def pack_into(buffer, offset, *v):
@@ -36,7 +33,6 @@ class sequencer:
         def unpack_from(buffer, offset = 0):
             return struct.unpack_from(sequencer.nvm_header.format, buffer, offset)
 
-    # functions
     def light_steps(self, drum_index: int, step: int, state: bool):
         # pylint: disable=global-statement
         remap = [4, 5, 6, 7, 0, 1, 2, 3]
