@@ -74,6 +74,11 @@ class sequencer:
         else:
             print(f'drum{drum_index} step{step}: off')
 
+    def refresh_bpm_display(self) -> None:
+        self.hardware.display.fill(0)
+        self.hardware.display.print(self.ticker.bpm)
+        self.hardware.display.show()
+
     def get_save_length(self) -> int:
         length = sequencer.nvm_header.size
         for drum in self.drums:
@@ -152,9 +157,7 @@ class sequencer:
         except ValueError:
             pass
 
-        self.hardware.display.fill(0)
-        self.hardware.display.print(self.ticker.bpm)
-        self.hardware.display.show()
+        self.refresh_bpm_display()
 
         # light up initial LEDs
         for drum_index in range(len(self.drums)):
@@ -206,8 +209,7 @@ class sequencer:
             tempo_encoder_delta = self.tempo_encoder.read_value()
             if tempo_encoder_delta != 0:
                 self.ticker.adjust_bpm(tempo_encoder_delta)
-                self.hardware.display.fill(0)
-                self.hardware.display.print(self.ticker.bpm)
+                self.refresh_bpm_display()
 
             step_shift_encoder_delta = self.step_shift_encoder.read_value()
             if step_shift_encoder_delta != 0:
