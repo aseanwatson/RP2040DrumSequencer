@@ -16,7 +16,7 @@ import ticker
 import hardware
 import relative_encoder
 
-class nvm_header:
+class file_header:
     """format of the header in NVM for save_state/load_state:
         < -- little-endian; lower bits are more significant
         B -- magic number
@@ -28,18 +28,18 @@ class nvm_header:
     magic_number = 0x02
     size = struct.calcsize(format)
     def __init__(self, drum_count, step_count, bpm) -> None:
-        self.magic_number = nvm_header.magic_number
+        self.magic_number = file_header.magic_number
         self.drum_count = drum_count
         self.step_count = step_count
         self.bpm = bpm
 
     def get_save_length(self) -> int:
-        return nvm_header.size
+        return file_header.size
 
     def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
         index = offset
-        values = struct.unpack_from(nvm_header.format, buffer = bytes, offset = index)
-        index += nvm_header.size
+        values = struct.unpack_from(file_header.format, buffer = bytes, offset = index)
+        index += file_header.size
         # TODO: This should be a more specific exception
         if self.magic_number != values[0]:
             raise ValueError("bad magic number")
@@ -53,14 +53,14 @@ class nvm_header:
     def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
         index = offset
         struct.pack_into(
-            nvm_header.format,
+            file_header.format,
             bytes,
             index,
-            nvm_header.magic_number,
+            file_header.magic_number,
             self.drum_count,
             self.step_count,
             self.bpm)
-        index += nvm_header.size
+        index += file_header.size
         return index - offset
 
 class sequencer:
@@ -80,7 +80,7 @@ class sequencer:
         self.hardware.display.show()
 
     def get_save_length(self) -> int:
-        length = nvm_header.size
+        length = file_header.size
         for drum in self.drums:
             length += drum.sequence.bytelen()
         return length
@@ -100,7 +100,7 @@ class sequencer:
         to store the state.
         """
         index = offset
-        header = nvm_header(
+        header = file_header(
             len(self.drums),
             self.stepper.num_steps,
             self.ticker.bpm)
@@ -120,7 +120,7 @@ class sequencer:
         to read the state.
         """
         index = offset
-        header = nvm_header(
+        header = file_header(
             len(self.drums),
             self.stepper.num_steps,
             self.ticker.bpm)
