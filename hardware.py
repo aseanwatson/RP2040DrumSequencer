@@ -10,6 +10,9 @@ import fake
 
 class hardware:
     def __init__(self):
+        self.num_steps = 8
+        self.num_rows = 5
+
         # define I2C
         self.i2c = board.STEMMA_I2C()
 
@@ -28,7 +31,7 @@ class hardware:
             data = board.SCK,
             latch = board.MOSI,
             clock = board.MISO,
-            key_count = 40,
+            key_count = self.num_rows * self.num_steps,
             value_when_pressed = True,
             value_to_latch = True,
             )
@@ -39,7 +42,7 @@ class hardware:
             sdi_pin = board.D3,
             clk_pin = board.D2,
             le_pin = board.D4,
-            n = 5,
+            n = self.num_rows * self.num_steps / 8, # number of bytes
             R_ext=400) # this is what I told Remi to add, but it should be bigger
 
         # STEMMA QT Rotary encoder setup
@@ -62,6 +65,9 @@ class hardware:
 
 class seans_hardware:
     def __init__(self):
+        self.num_steps = 4
+        self.num_rows = 4
+
         # Start button
         start_button_in = fake.DigitalInOut()
         start_button_in.pull = Pull.UP
@@ -77,7 +83,7 @@ class seans_hardware:
             data               = (board.GP15,),
             latch              = board.GP16,
             clock              = board.GP17,
-            key_count          = (16,),
+            key_count          = (self.num_rows * self.num_steps,),
             value_when_pressed = True,
             value_to_latch     = True,
             )
@@ -89,7 +95,7 @@ class seans_hardware:
             clk_pin = board.GP11,
             le_pin = board.GP10,
             R_ext= 1100, # two 2.2K resistors in parallel
-            n = 2)
+            n = self.num_rows / 8)
 
         self.tempo_encoder = fake.IncrementalEncoder()
         knobbutton_in = fake.DigitalInOut()

@@ -83,11 +83,10 @@ class sequencer:
         return index - offset
 
     def __init__(self, bpm) -> None:
-        num_steps = 8  # number of steps/switches per row
         self.hardware = hardware.hardware()
         self.ticker = ticker.ticker(bpm)
-        self.stepper = stepper.stepper(num_steps)
-        self.drums = drum_set.drum_set(self.hardware.midi, num_steps)
+        self.stepper = stepper.stepper(self.hardware.num_steps)
+        self.drums = drum_set.drum_set(self.hardware.midi, self.hardware.num_steps)
         self.tempo_encoder = relative_encoder.relative_encoder(self.hardware.tempo_encoder)
         self.step_shift_encoder = relative_encoder.relative_encoder(self.hardware.step_shift_encoder)
         self.pattern_length_encoder = relative_encoder.relative_encoder(self.hardware.pattern_length_encoder)
@@ -97,11 +96,18 @@ class sequencer:
         self.hardware.display.brightness = 0.3
 
         # default starting sequence
-        self.drums.add_drum(drum.BassDrum)
-        self.drums.add_drum(drum.AcousticSnare)
-        self.drums.add_drum(drum.LowFloorTom)
-        self.drums.add_drum(drum.PedalHiHat)
-        self.drums.add_drum(drum.CowBell)
+        i = 0
+        for drum_definition in (
+                drum.BassDrum,
+                drum.AcousticSnare,
+                drum.LowFloorTom,
+                drum.PedalHiHat,
+                drum.CowBell,
+                drum.CowBell,
+                ):
+            if i < self.hardware.num_rows:
+                self.drums.add_drum(drum_definition)
+                i += 1
 
         # try to load the state (no-op if NVM not valid)
         try:
