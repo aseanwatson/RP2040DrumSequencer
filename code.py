@@ -17,23 +17,26 @@ import ticker
 import hardware
 import relative_encoder
 
-hardware = hardware.hardware()
-hardware.leds.write_config(0)
-hardware.display.brightness = 0.3
+# classes
+# format of the header in NVM for save_state/load_state:
+# < -- little-endian; lower bits are more significant
+# B -- magic number
+# B -- number of drums (unsigned byte: 0 - 255)
+# B -- number of steps (unsigned byte: 0 - 255)
+# H -- BPM beats per minute (unsigned short: 0 - 65536)
 
-num_steps = 8  # number of steps/switches per row
+# this number should change if load/save logic changes in
+# and incompatible way
+class nvm_header:
+    format = b'<BBH'
+    magic_number = 0x02
+    size = struct.calcsize(format)
+    def pack_into(buffer, offset, *v):
+        struct.pack_into(nvm_header.format, buffer, offset, *v)
+    def unpack_from(buffer, offset = 0):
+        return struct.unpack_from(nvm_header.format, buffer, offset)
 
-ticker = ticker.ticker(bpm = 120)
-stepper = stepper.stepper(num_steps)
-
-# default starting sequence
-drums = drum_set.drum_set(hardware.midi, num_steps)
-drums.add_drum(drum.BassDrum)
-drums.add_drum(drum.AcousticSnare)
-drums.add_drum(drum.LowFloorTom)
-drums.add_drum(drum.PedalHiHat)
-drums.add_drum(drum.CowBell)
-
+# functions
 def light_steps(drum_index: int, step: int, state: bool):
     # pylint: disable=global-statement
     global hardware, num_steps
@@ -46,24 +49,6 @@ def light_steps(drum_index: int, step: int, state: bool):
     else:
         print(f'drum{drum_index} step{step}: off')
 
-# format of the header in NVM for save_state/load_state:
-# < -- little-endian; lower bits are more significant
-# B -- magic number
-# B -- number of drums (unsigned byte: 0 - 255)
-# B -- number of steps (unsigned byte: 0 - 255)
-# H -- BPM beats per minute (unsigned short: 0 - 65536)
-
-# this number should change if load/save logic changes in
-# and incompatible way
-magic_number = 0x02
-class nvm_header:
-    format = b'<BBH'
-    size = struct.calcsize(format)
-    def pack_into(buffer, offset, *v):
-        struct.pack_into(nvm_header.format, buffer, offset, *v)
-    def unpack_from(buffer, offset = 0):
-        return struct.unpack_from(nvm_header.format, buffer, offset)
-
 def save_state() -> None:
     global ticker
     length = nvm_header.size
@@ -73,7 +58,7 @@ def save_state() -> None:
     nvm_header.pack_into(
         bytes,
         0,
-        magic_number,
+        nvm_header.magic_number,
         num_steps,
         ticker.bpm)
     index = nvm_header.size
@@ -87,7 +72,7 @@ def save_state() -> None:
 def load_state() -> None:
     global num_steps, ticker, drums
     header = nvm_header.unpack_from(microcontroller.nvm[0:nvm_header.size])
-    if header[0] != magic_number or header[1] == 0 or header[2] == 0:
+    if header[0] != nvm_header.magic_number or header[1] == 0 or header[2] == 0:
         return
     num_steps = header[1]
     newbpm = header[2]
@@ -97,6 +82,28 @@ def load_state() -> None:
         seq.load(microcontroller.nvm[index:index+seq.bytelen()])
         index += seq.bytelen()
     ticker.set_bpm(newbpm)
+
+# init code
+num_steps = 8  # number of steps/switches per row
+hardware = hardware.hardware()
+ticker = ticker.ticker(bpm = 120)
+stepper = stepper.stepper(num_steps)
+drums = drum_set.drum_set(hardware.midi, num_steps)
+tempo_encoder = relative_encoder.relative_encoder(hardware.tempo_encoder)
+step_shift_encoder = relative_encoder.relative_encoder(hardware.step_shift_encoder)
+pattern_length_encoder = relative_encoder.relative_encoder(hardware.pattern_length_encoder)
+
+
+# setup code
+hardware.leds.write_config(0)
+hardware.display.brightness = 0.3
+
+# default starting sequence
+drums.add_drum(drum.BassDrum)
+drums.add_drum(drum.AcousticSnare)
+drums.add_drum(drum.LowFloorTom)
+drums.add_drum(drum.PedalHiHat)
+drums.add_drum(drum.CowBell)
 
 # try to load the state (no-op if NVM not valid)
 load_state()
@@ -112,10 +119,7 @@ for drum_index in range(len(drums)):
         light_steps(drum_index, step_index, drum.sequence[step_index])
 hardware.leds.write()
 
-tempo_encoder = relative_encoder.relative_encoder(hardware.tempo_encoder)
-step_shift_encoder = relative_encoder.relative_encoder(hardware.step_shift_encoder)
-pattern_length_encoder = relative_encoder.relative_encoder(hardware.pattern_length_encoder)
-
+# run code
 while True:
     hardware.start_button.update()
     if hardware.start_button.fell:  # pushed encoder button plays/stops transport
