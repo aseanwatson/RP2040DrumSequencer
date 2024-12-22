@@ -174,5 +174,5 @@ while True:
         if pattern_length_encoder_delta != 0:
             stepper.adjust_range_length(pattern_length_encoder_delta)
 
- # suppresions:
- # type: ignore
+# suppresions:
+# type: ignore
