@@ -34,7 +34,6 @@ class sequencer:
             return struct.unpack_from(sequencer.nvm_header.format, buffer, offset)
 
     def refresh_step_led(self, drum_index: int, step: int, state: bool):
-        # pylint: disable=global-statement
         remap = [4, 5, 6, 7, 0, 1, 2, 3]
         new_drum = 4 - drum_index
         new_step = remap[step]
