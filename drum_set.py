@@ -28,6 +28,10 @@ class drum_set:
         """play_step(): plays a given step on all drums (if their sequence says to)."""
         for drum in self.drums:
             drum.play(self.midi, step)
+    
+    def get_step_value(self, drum_index: int, step_index: int) -> bool:
+        """get the step value of a drum"""
+        return self[drum_index].sequence[step_index]
 
     def __len__(self) -> int:
         """__len__(): lets the len(...) funtion work on a drum_set; gives number of drums."""

@@ -18,15 +18,12 @@ import relative_encoder
 import file_header
 
 class sequencer:
-    def refresh_step_led(self, drum_index: int, step: int, state: bool):
-        remap = [4, 5, 6, 7, 0, 1, 2, 3]
-        new_drum = 4 - drum_index
-        new_step = remap[step]
-        self.hardware.leds[new_drum * self.stepper.num_steps + new_step] = state
-        if state:
-            print(f'drum{drum_index} step{step}: on')
-        else:
-            print(f'drum{drum_index} step{step}: off')
+    def write_leds(self) -> None:
+        def get_led_state(self, led_index: int) -> bool:
+            drum_index = (3,2,1,0)[led_index // self.drums.step_count]
+            step_index = (4,5,6,7,0,1,2,3)[led_index % self.drums.step_count]
+            return self.drums.get_step_value(drum_index, step_index)
+        self.hardware.leds.write(get_led_state)
 
     def refresh_bpm_display(self) -> None:
         self.hardware.display.fill(0)
@@ -119,11 +116,7 @@ class sequencer:
         self.refresh_bpm_display()
 
         # light up initial LEDs
-        for drum_index in range(len(self.drums)):
-            drum = self.drums[drum_index]
-            for step_index in range(self.stepper.num_steps):
-                self.refresh_step_led(drum_index, step_index, drum.sequence[step_index])
-        self.hardware.leds.write()
+        self.write_leds()
 
     def run_main_loop(self) -> None:
         self.hardware.start_button.update()
@@ -151,8 +144,7 @@ class sequencer:
                 step_index = i % self.stepper.num_steps
                 drum = self.drums[drum_index]
                 drum.sequence.toggle(step_index) # toggle step
-                self.refresh_step_led(drum_index, step_index, drum.sequence[step_index])  # toggle light
-                self.hardware.leds.write()
+                self.write_leds()
 
         # TODO: I don't understand why we only want to check the encoder between steps
         check_encoder = not self.ticker.playing

@@ -1,11 +1,11 @@
 import digitalio
 import time
+try:
+    import typing
+except:
+    pass
 
 class TLC5916:
-    def index_mask(i):
-        """index_mask(i): convert a bit index into a byte index and a bitmask"""
-        return (i // 8, 1 << (i % 8))
-
     def get_digital_out(pin):
         """get_digitial_out(pin): helper to get a DigitalInOut in OUTPUT mode"""
         pin = digitalio.DigitalInOut(pin)
@@ -13,29 +13,13 @@ class TLC5916:
         return pin
 
     def __init__(self, clk_pin, le_pin, sdi_pin, oe_pin, n, R_ext = None):
-        self.ba = bytearray(n)
         self.clk = TLC5916.get_digital_out(clk_pin)
         self.le = TLC5916.get_digital_out(le_pin)
         self.sdi = TLC5916.get_digital_out(sdi_pin)
         self.oe = TLC5916.get_digital_out(oe_pin)
         self.oe.value = False
+        self.led_count = n * 8
         self.R_ext = R_ext
-
-    def __setitem__(self, i, b):
-        """__setitem__(i, b): Sets the i-th LED to on (if b is True) or off (if b is False)"""
-        index, mask = TLC5916.index_mask(i)
-        if index < len(self.ba):
-            if b:
-                self.ba[index] |= mask
-            else:
-                self.ba[index] &= ~mask
-
-    def __getitem__(self, i):
-        """__getitem__(i): Tests if the i-th LED is on"""
-        index, mask = TLC5916.index_mask(i)
-        if index < len(self.ba):
-            return self.ba[index] & mask != 0
-        return False
 
     def pulse_latch(self):
         """pulse_latch(): shared code to pusle the LE (latch) pin on/off"""
@@ -57,10 +41,10 @@ class TLC5916:
             self.sdi.value = bool(byte & (1 << i))
             self.pulse_clock()
 
-    def write(self):
+    def write(self, index_evaluator: typing.Callable[[int], bool]):
         """write(): updates the output pins to match values set."""
-        for byte in self.ba:
-            self.write_byte(byte)
+        for led_index in range(self.led_count):
+            self.sdi.value = bool(index_evaluator(led_index))
         self.pulse_latch()
 
     def set_special_mode(self, val):
