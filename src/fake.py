@@ -17,6 +17,7 @@ class DigitalInOut:
     def __call__(self, *args, **kwds):
         return self.value
     def switch_to_output(self, value: bool = False, drive_mode: DriveMode = DriveMode.PUSH_PULL) -> None:
+        self.value = value
         self.Direction = Direction.OUTPUT
         self.drive_mode = drive_mode
     def switch_to_input(self, pull: Optional[Pull] = None) -> None:
