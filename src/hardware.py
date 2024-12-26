@@ -61,7 +61,7 @@ class hardware:
         self.midi = usb_midi.ports[1]
 
         # Display
-        self.display = segments.Seg14x4(hardware.i2c, address=(0x70))
+        self.display = segments.Seg14x4(self.i2c, address=(0x70))
 
 class seans_hardware:
     def __init__(self):
