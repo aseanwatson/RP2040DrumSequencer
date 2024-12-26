@@ -26,6 +26,7 @@ MOCK_MODULES = [
     "board",
     "digitalio",
     "keypad",
+    "microcontroller",
     "rotaryio",
     "usb_midi",
 ]
