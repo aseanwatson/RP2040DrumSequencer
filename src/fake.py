@@ -1,4 +1,4 @@
-from digitalio import DigitalInOut, Pull, DriveMode, Direction
+from digitalio import Pull, DriveMode, Direction
 try:
     from typing import Optional,Union,List,Tuple
 except:
