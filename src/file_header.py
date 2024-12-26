@@ -6,7 +6,7 @@ class file_header:
         B -- number of drums (unsigned byte: 0 - 255)
         B -- number of steps (unsigned byte: 0 - 255)
         H -- BPM beats per minute (unsigned short: 0 - 65536)"""
-    format = b'<BBH'
+    format = b'<BBBH'
     """magic_number should change if load/save logic changes in and incompatible way"""
     magic_number = 0x02
     size = struct.calcsize(format)
