@@ -54,7 +54,7 @@ class bitarray(object):
 
     def __repr__(self) -> str:
         """gives code which will create an equivalent bitarray"""
-        return f'bitarray(({','.join(['1' if self[i] else '0' for i in range(len(self))])}))'
+        return f'bitarray(({",".join(["1" if self[i] else "0" for i in range(len(self))])}))'
 
     def __getindexandmask(self, index):
         """
