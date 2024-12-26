@@ -22,6 +22,7 @@ class DigitalInOut:
         self.drive_mode = drive_mode
     def switch_to_input(self, pull: Optional[Pull] = None) -> None:
         self.Direction = Direction.INPUT
+        self.pull = pull
     direction: Direction
     value: bool
     drive_mode: DriveMode
