@@ -1,6 +1,6 @@
-from drum import drum, drum_definition
 import usb_midi
-from bitarray import bitarray
+from . import drum
+from . import bitarray
 
 class drum_set:
     """drum_set class: a list of drum objects"""
@@ -11,9 +11,9 @@ class drum_set:
     
     def add_custom_drum(self, name: str, note: int) -> None:
         """add_custom_drum(name, note): directly add a drum without a drum_definition."""
-        self.drums.append(drum(name, note, bitarray(self.step_count)))
+        self.drums.append(drum.drum(name, note, bitarray.bitarray(self.step_count)))
 
-    def add_drum(self, definition: drum_definition) -> None:
+    def add_drum(self, definition: drum.drum_definition) -> None:
         """add_drum(definition): add a drum based on a drum_definition."""
         self.add_custom_drum(name=definition.short_name, note=definition.note)
 
@@ -37,7 +37,7 @@ class drum_set:
         """__len__(): lets the len(...) funtion work on a drum_set; gives number of drums."""
         return len(self.drums)
 
-    def __getitem__(self, i: int) -> drum:
+    def __getitem__(self, i: int) -> drum.drum:
         """__getitem__(i): lets drums[i] work; gets a drum in the set, like a list."""
         return self.drums[i]
 

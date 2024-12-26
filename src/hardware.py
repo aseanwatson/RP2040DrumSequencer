@@ -5,8 +5,8 @@ import usb_midi
 from adafruit_seesaw import seesaw, rotaryio, digitalio
 from adafruit_debouncer import Debouncer
 from adafruit_ht16k33 import segments
-from TLC5916 import TLC5916
-import fake
+from . import TLC5916
+from . import fake
 
 class hardware:
     def __init__(self):
@@ -37,7 +37,7 @@ class hardware:
             )
 
         # Setup LEDs
-        self.leds = TLC5916(
+        self.leds = TLC5916.TLC5916(
             oe_pin = board.D5,
             sdi_pin = board.D3,
             clk_pin = board.D2,
@@ -89,7 +89,7 @@ class seans_hardware:
             )
 
         # Setup LEDs
-        self.leds = TLC5916(
+        self.leds = TLC5916.TLC5916(
             oe_pin = board.GP13,
             sdi_pin = board.GP12,
             clk_pin = board.GP11,

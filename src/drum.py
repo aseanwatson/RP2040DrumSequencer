@@ -1,5 +1,5 @@
 import usb_midi
-from bitarray import bitarray
+from . import bitarray
 
 class drum:
     """drum class: represents a drum and its beat sequence"""
