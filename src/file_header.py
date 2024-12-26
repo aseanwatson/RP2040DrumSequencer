@@ -10,7 +10,7 @@ class file_header:
     """magic_number should change if load/save logic changes in and incompatible way"""
     magic_number = 0x02
     size = struct.calcsize(format)
-    def __init__(self, drum_count, step_count, bpm) -> None:
+    def __init__(self, drum_count: int, step_count: int, bpm: int) -> None:
         self.magic_number = file_header.magic_number
         self.drum_count = drum_count
         self.step_count = step_count
@@ -19,7 +19,7 @@ class file_header:
     def get_save_length(self) -> int:
         return file_header.size
 
-    def load_state_from_bytes(self, bytes, offset: int = 0) -> int:
+    def load_state_from_bytes(self, bytes: bytearray, offset: int = 0) -> int:
         index = offset
         values = struct.unpack_from(file_header.format, buffer = bytes, offset = index)
         index += file_header.size
@@ -33,7 +33,7 @@ class file_header:
         self.bpm = values[3]
         return index - offset
 
-    def save_state_to_bytes(self, bytes, offset: int = 0) -> int:
+    def save_state_to_bytes(self, bytes: bytearray, offset: int = 0) -> int:
         index = offset
         struct.pack_into(
             file_header.format,
