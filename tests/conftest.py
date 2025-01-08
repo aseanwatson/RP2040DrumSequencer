@@ -31,7 +31,6 @@ MOCK_MODULES = [
     "usb_midi",
 ]
 
-
 def mock_imported_modules():
     """
     Mocks away the modules named in MOCK_MODULES, so the module under test
@@ -47,7 +46,6 @@ def mock_imported_modules():
     for m_path in module_paths:
         sys.modules[m_path] = MagicMock()
 
-
 def pytest_runtest_setup(item):
     """
     Called immediately before any test function is called.
@@ -56,7 +54,6 @@ def pytest_runtest_setup(item):
     isolated.
     """
     mock_imported_modules()
-
 
 # Initial mocking needed to stop ImportError when importing module under test.
 mock_imported_modules()
