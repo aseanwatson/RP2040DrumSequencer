@@ -1,4 +1,4 @@
 .vscode/
-lib/
+src/lib/
 __pycache__/
 .pytest_cache/
