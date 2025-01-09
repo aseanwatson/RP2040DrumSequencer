@@ -8,5 +8,8 @@ def test_relative_encoder():
     re = relative_encoder.relative_encoder(enc)
     assert re.read_value() == 0
     enc.position = 11
-    assert re.read_value() == 1
+    assert re.read_value() == 1 # 11 -1
+    assert re.read_value() == 0
+    enc.position = 8 
+    assert re.read_value() == -3 # 8 - 11
     assert re.read_value() == 0
