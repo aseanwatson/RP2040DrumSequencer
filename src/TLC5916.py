@@ -6,7 +6,8 @@ except:
     pass
 
 class TLC5916:
-    def get_digital_out(pin):
+    @staticmethod
+    def get_digital_out(pin) -> digitalio.DigitalInOut:
         """get_digitial_out(pin): helper to get a DigitalInOut in OUTPUT mode"""
         pin = digitalio.DigitalInOut(pin)
         pin.direction = digitalio.Direction.OUTPUT
