@@ -26,7 +26,7 @@ class ticker:
 
     def play(self) -> None:
         """Start playing. (Next call to advance() will return True.)"""
-        if not self.playing():
+        if not self.playing:
             self.next_step = ticks_ms()
             self.playing = True
 
