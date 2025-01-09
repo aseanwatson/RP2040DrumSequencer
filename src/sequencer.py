@@ -11,7 +11,7 @@ from . import file_header
 class sequencer:
     def write_leds(self) -> None:
         def get_led_state(led_index: int) -> bool:
-            drum_index = (3,2,1,0)[led_index // self.drums.step_count]
+            drum_index = (4,3,2,1,0)[led_index // self.drums.step_count]
             step_index = (4,5,6,7,0,1,2,3)[led_index % self.drums.step_count]
             return self.drums.get_step_value(drum_index, step_index)
         self.hardware.leds.write(get_led_state)
