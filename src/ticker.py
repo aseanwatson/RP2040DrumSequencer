@@ -63,4 +63,3 @@ class ticker:
     def adjust_bpm(self, adjustment: int) -> None:
         """Set the beats/minute in a relative way"""
         self.set_bpm(self.bpm + adjustment)
-
