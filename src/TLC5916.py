@@ -1,5 +1,6 @@
 import digitalio
 import time
+import microcontroller
 try:
     import typing
 except:
@@ -7,13 +8,13 @@ except:
 
 class TLC5916:
     @staticmethod
-    def get_digital_out(pin) -> digitalio.DigitalInOut:
+    def get_digital_out(pin: microcontroller.Pin) -> digitalio.DigitalInOut:
         """get_digitial_out(pin): helper to get a DigitalInOut in OUTPUT mode"""
         pin = digitalio.DigitalInOut(pin)
         pin.direction = digitalio.Direction.OUTPUT
         return pin
 
-    def __init__(self, clk_pin, le_pin, sdi_pin, oe_pin, n, R_ext = None):
+    def __init__(self, clk_pin: microcontroller.Pin, le_pin: microcontroller.Pin, sdi_pin: microcontroller.Pin, oe_pin: microcontroller.Pin, n: int, R_ext: typing.Optional[float] = None) -> None:
         self.clk = TLC5916.get_digital_out(clk_pin)
         self.le = TLC5916.get_digital_out(le_pin)
         self.sdi = TLC5916.get_digital_out(sdi_pin)
@@ -22,19 +23,19 @@ class TLC5916:
         self.led_count = n * 8
         self.R_ext = R_ext
 
-    def pulse_latch(self):
+    def pulse_latch(self) -> None:
         """pulse_latch(): shared code to pusle the LE (latch) pin on/off"""
         self.le.value = True
         time.sleep(0.00001)
         self.le.value = False
 
-    def pulse_clock(self):
+    def pulse_clock(self) -> None:
         """pulse_clock(): shared code to pusle the CLK (clock) pin on/off"""
         self.clk.value = True
         time.sleep(0.00001)
         self.clk.value = False
 
-    def write_byte(self, byte):
+    def write_byte(self, byte: int) -> None:
         """write_byte(): shared code to send a byte on the serial data in (SDI) pin, pulsing the CLK (clock) each time
         
         It sends bit 0 first (little endian)."""
@@ -42,13 +43,13 @@ class TLC5916:
             self.sdi.value = bool(byte & (1 << i))
             self.pulse_clock()
 
-    def write(self, index_evaluator: typing.Callable[[int], bool]):
+    def write(self, index_evaluator: typing.Callable[[int], bool]) -> None:
         """write(): updates the output pins to match values set."""
         for led_index in range(self.led_count):
             self.sdi.value = bool(index_evaluator(led_index))
         self.pulse_latch()
 
-    def set_special_mode(self, val):
+    def set_special_mode(self, val: bool) -> None:
         """set_special_mode(val): Sets the chip into special mode (if val = True) or normal mode (ohterwise)."""
         # see https://www.ti.com/lit/ds/symlink/tlc5916.pdf
         # section 9.4.1
@@ -66,7 +67,7 @@ class TLC5916:
             self.pulse_clock()
         self.oe.value  = False
 
-    def write_config(self, value):
+    def write_config(self, value: int) -> None:
         """write_config(value): sets the current configuration to value.
         Value is a byte CM:HC:CC5:CC4:CC3:CC2:CC1:CC0 (CC0 is shifted out first).
 
@@ -91,18 +92,18 @@ class TLC5916:
         self.set_special_mode(False)
 
     @property
-    def min_current(self):
+    def min_current(self) -> float:
         if self.R_ext == None:
             raise ValueError('min_current; R_ext must be sepcified in constructor')
         return 1.575 / self.R_ext
 
     @property
-    def max_current(self):
+    def max_current(self) -> float:
         if self.R_ext == None:
             raise ValueError('min_current; R_ext must be sepcified in constructor')
         return 18.7524 / self.R_ext
 
-    def set_target_current(self, value, *, R_ext = None, prefer_high_CM = False):
+    def set_target_current(self, value, *, R_ext = None, prefer_high_CM = False) -> None:
         """set_target_current: computes a suitable value for write_config"""
         effective_R_ext = self.R_ext if R_ext == None else R_ext
         if effective_R_ext == None:
@@ -144,4 +145,4 @@ class TLC5916:
             config_value |= 0b00100000
         config_value |= HC << 6 | CM << 7
 
-        return self.write_config(config_value)
+        self.write_config(config_value)
