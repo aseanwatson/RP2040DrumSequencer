@@ -20,7 +20,7 @@ class TLC5916:
         self.sdi = TLC5916.get_digital_out(sdi_pin)
         self.oe = TLC5916.get_digital_out(oe_pin)
         self.oe.value = False
-        self.led_count = n * 8
+        self.chain_length = int(n)
         self.R_ext = R_ext
 
     def pulse_latch(self) -> None:
@@ -45,7 +45,7 @@ class TLC5916:
 
     def write(self, index_evaluator: typing.Callable[[int], bool]) -> None:
         """write(): updates the output pins to match values set."""
-        for led_index in range(self.led_count):
+        for led_index in range(self.chain_length * 8):
             self.sdi.value = bool(index_evaluator(led_index))
         self.pulse_latch()
 
@@ -86,7 +86,7 @@ class TLC5916:
 
         CM should be clear for the range 3mA to 40mA; set for 10mA to 120mA.  If set, CM multiplies the current by a factor of 3."""
         self.set_special_mode(True)
-        for j in range(len(self.ba)):
+        for j in range(self.chain_length):
             self.write_byte(value)
         self.pulse_latch()
         self.set_special_mode(False)
