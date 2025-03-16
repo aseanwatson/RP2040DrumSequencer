@@ -62,7 +62,11 @@ class bitarray(object):
         the bytearray for a given bit. It also gives the
         bitmask to select the bit within that byte
         """
-        if index < 0 or index >= self._bitscount:
+        if index < 0:
+            print(f"index={index} too small")
+            raise IndexError()
+        if index >= self._bitscount:
+            print(f"index={index} too big")
             raise IndexError()
         byteindex = index // 8
         bitmask = 1 << (index % 8)

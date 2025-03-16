@@ -15,7 +15,7 @@ from digitalio import DigitalInOut, Pull
 import keypad
 import usb_midi
 from adafruit_seesaw import seesaw, rotaryio, digitalio
-from adafruit_debouncer import Debouncer
+from adafruit_debouncer import Debouncer, Button
 from adafruit_ht16k33 import segments
 from bitarray import bitarray
 from TLC5916 import TLC5916
@@ -55,9 +55,10 @@ class stepper:
         # keep adjustment in the range where self.first_step >= 0 and
         # self.last_step < self.num_steps
         adjustment = max(adjustment, -self.first_step)
-        adjustment = min(adjustment, self.last_step - 1 - self.first_step)
+        adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
         self.first_step += adjustment
         self.last_step += adjustment
+        print(f"adjust_range_start 1st step={self.first_step},last={self.last_step}, adjustment={adjustment}")
         # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
         # eventually. We might want to revisit this.
@@ -68,6 +69,7 @@ class stepper:
         adjustment = max(adjustment, self.first_step - self.last_step)
         adjustment = min(adjustment, self.last_step - 1 - self.first_step)
         self.last_step += adjustment
+        print(f"adjust_range_length 1st step={self.first_step},last={self.last_step}, adjustment={adjustment}")
          # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
         # eventually. We might want to revisit this.
@@ -93,7 +95,7 @@ i2c = board.STEMMA_I2C()
 
 num_steps = 8  # number of steps/switches per row
 steps_per_beat = 4  # subdivide beats down to to 16th notes
-# Beat timing assumes 4/4 time signature, 
+# Beat timing assumes 4/4 time signature,
 # e.g. 4 beats per measure, 1/4 note gets the beat
 set_bpm(120)
 
@@ -109,6 +111,21 @@ start_button = Debouncer(start_button_in)
 reverse_button_in = DigitalInOut(board.A1)
 reverse_button_in.pull = Pull.UP
 reverse_button = Debouncer(reverse_button_in)
+
+#channel 1 button
+button1_in = DigitalInOut(board.D9) 
+button1_in.pull = Pull.UP
+button1 = Button(button1_in, value_when_pressed=False)
+
+#channel 2 button
+button2_in = DigitalInOut(board.D8) 
+button2_in.pull = Pull.UP
+button2 = Button(button2_in, value_when_pressed=False)
+
+#channel 3 button
+button3_in = DigitalInOut(board.A3) 
+button3_in.pull = Pull.UP
+button3 = Button(button3_in, value_when_pressed=False)
 
 # Setup switches
 # Input shift register
@@ -135,12 +152,28 @@ leds.write_config(0)
 #
 # STEMMA QT Rotary encoder setup
 rotary_seesaw = seesaw.Seesaw(i2c, addr=0x36)  # default address is 0x36
-encoder = rotaryio.IncrementalEncoder(rotary_seesaw)
-last_encoder_pos = 0
+tempo_encoder = rotaryio.IncrementalEncoder(rotary_seesaw)
+last_tempo_encoder_pos = 0
 rotary_seesaw.pin_mode(24, rotary_seesaw.INPUT_PULLUP)  # setup the button pin
 knobbutton_in = digitalio.DigitalIO(rotary_seesaw, 24)  # use seesaw digitalio
 knobbutton = Debouncer(knobbutton_in)  # create debouncer object for button
-encoder_pos = -encoder.position
+tempo_encoder_pos = -tempo_encoder.position
+
+
+# setup adafruit quad encoder
+rotary_seesaw2 = seesaw.Seesaw(i2c, addr=0x49)  # default address is 0x36
+   
+# Pattern Length Encoder
+pattern_length_encoder = rotaryio.IncrementalEncoder(rotary_seesaw2, 1)
+last_pattern_length_encoder_pos = 0
+pattern_length_encoder_pos = -pattern_length_encoder.position
+
+
+# Step Shift Encoder
+step_shift_encoder = rotaryio.IncrementalEncoder(rotary_seesaw2, 3)
+last_step_shift_encoder_pos = 0
+step_shift_encoder_pos = -step_shift_encoder.position
+
 
 # MIDI setup
 midi = usb_midi.ports[1]
@@ -155,8 +188,8 @@ drums = [
 ]
 
 def play_drum(note):
-    midi_msg_on = bytearray([0x99, note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
-    midi_msg_off = bytearray([0x89, note, 0])
+    midi_msg_on = bytearray([0x90|(channel - 1), note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
+    midi_msg_off = bytearray([0x80|(channel - 1), note, 0])
     midi.write(midi_msg_on)
     midi.write(midi_msg_off)
 
@@ -239,6 +272,9 @@ display.show()
 display.print(bpm)
 display.show()
 
+edit_mode = 0  # 0=bpm, 1=voices
+num_modes = 2
+
 print("Drum Trigger 2040")
 
 
@@ -253,6 +289,8 @@ time.sleep(1)
 display.marquee("BPM", 0.05, loop=False)
 time.sleep(0.75)
 display.marquee(str(bpm), 0.1, loop=False)
+
+channel= 1
 
 # light up initial LEDs
 for drum_index in range(len(drums)):
@@ -275,6 +313,18 @@ while True:
     reverse_button.update()
     if reverse_button.fell:
         stepper.reverse()
+ 
+    button1.update()
+    if button1.pressed:
+        channel = 1
+
+    button2.update()
+    if button2.pressed:
+        channel = 2
+
+    button3.update()
+    if button3.pressed:
+        channel = 3
 
     if playing:
         now = ticks_ms()
@@ -289,9 +339,13 @@ while True:
                     play_drum(drum.note)
             # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
-            encoder_pos = -encoder.position  # only check encoder while playing between steps
+            tempo_encoder_pos = -tempo_encoder.position  # only check encoder while playing between steps
+            pattern_length_encoder_pos = -pattern_length_encoder.position
+            step_shift_encoder_pos = -step_shift_encoder.position
     else:  # check the encoder all the time when not playing
-        encoder_pos = -encoder.position
+        tempo_encoder_pos = -tempo_encoder.position
+        pattern_length_encoder_pos = -pattern_length_encoder.position
+        step_shift_encoder_pos = -step_shift_encoder.position
 
     # switches add or remove steps
     switch = switches.events.get()
@@ -306,14 +360,28 @@ while True:
             light_steps(drum_index, step_index, drum.sequence[step_index])  # toggle light
             leds.write()
 
-    if encoder_pos != last_encoder_pos:
-        encoder_delta = encoder_pos - last_encoder_pos
-        newbpm = bpm + encoder_delta  # or (encoder_delta * 5)
+    if tempo_encoder_pos != last_tempo_encoder_pos:
+        tempo_encoder_delta = tempo_encoder_pos - last_tempo_encoder_pos
+        newbpm = bpm + tempo_encoder_delta  # or (encoder_delta * 5)
         newbpm = min(max(newbpm, 10), 400)
         set_bpm(newbpm)
         display.fill(0)
         display.print(bpm)
-        last_encoder_pos = encoder_pos
+        last_tempo_encoder_pos = tempo_encoder_pos
+
+    if pattern_length_encoder_pos != last_pattern_length_encoder_pos:
+        pattern_length_encoder_delta = pattern_length_encoder_pos - last_pattern_length_encoder_pos
+        stepper.adjust_range_length(pattern_length_encoder_delta)
+        last_pattern_length_encoder_pos = pattern_length_encoder_pos
+        print(f"last_pattern_length_encoder_pos = {pattern_length_encoder_pos}")
+
+    if step_shift_encoder_pos != last_step_shift_encoder_pos:
+        step_shift_encoder_delta = step_shift_encoder_pos - last_step_shift_encoder_pos
+        stepper.adjust_range_start(step_shift_encoder_delta)
+        last_step_shift_encoder_pos = step_shift_encoder_pos
+        print(f"laststep last_step_shift_encoder_pos = {step_shift_encoder_pos}")
+
+
 
  # suppresions:
  # type: ignore
