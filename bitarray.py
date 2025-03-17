@@ -3,10 +3,11 @@ class bitarray(object):
     A bitarray is logically an array of bool values stored
     as a bytearray
     """
+
     def __init__(self, data):
         if isinstance(data, int):
             # round up
-            bytecount = (data-1) // 8 + 1
+            bytecount = (data - 1) // 8 + 1
             self._bytes = bytearray(bytecount)
             self._bitscount = data
         else:
@@ -54,7 +55,7 @@ class bitarray(object):
 
     def __repr__(self) -> str:
         """gives code which will create an equivalent bitarray"""
-        return f'bitarray(({','.join(['1' if self[i] else '0' for i in range(len(self))])}))'
+        return f"bitarray(({','.join(['1' if self[i] else '0' for i in range(len(self))])}))"
 
     def __getindexandmask(self, index):
         """
@@ -73,7 +74,7 @@ class bitarray(object):
         return (byteindex, bitmask)
 
     def __getitem__(self, index: int) -> bool:
-        """ supports the self[index] syntax to read a bit
+        """supports the self[index] syntax to read a bit
 
         Returns True if the bit is set; False otherwise
         """
@@ -81,7 +82,7 @@ class bitarray(object):
         return self._bytes[byteindex] & bitmask != 0
 
     def __setitem__(self, index: int, value: bool) -> None:
-        """ supports the self[index] syntax to set a bit
+        """supports the self[index] syntax to set a bit
 
         Sets the bit if the value is True; clears it otherwise.
         """
@@ -108,7 +109,7 @@ class bitarray(object):
         """
         if start + self.bytelen() > len(data):
             raise IndexError()
-        data[start:start+self.bytelen()] = self._bytes
+        data[start : start + self.bytelen()] = self._bytes
 
     def load(self, data: bytearray, start: int = 0) -> None:
         """
@@ -118,4 +119,4 @@ class bitarray(object):
         """
         if start + self.bytelen() > len(data):
             raise IndexError()
-        self._bytes = data[start:start+self.bytelen()]
+        self._bytes = data[start : start + self.bytelen()]

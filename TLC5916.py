@@ -1,6 +1,7 @@
 import digitalio
 import time
 
+
 class TLC5916:
     def index_mask(i):
         return (i // 8, 1 << (i % 8))
@@ -37,7 +38,7 @@ class TLC5916:
         self.le.value = False
 
     def write(self):
-        for i in range(8*len(self.ba)):
+        for i in range(8 * len(self.ba)):
             self.sdi.value = self[i]
             self.clk.value = True
             self.clk.value = False
@@ -45,31 +46,31 @@ class TLC5916:
 
     def set_special_mode(self, val):
         self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = False
+        self.oe.value = True
+        self.le.value = False
         self.clk.value = True
         time.sleep(0.00001)
         self.clk.value = False
-        self.oe.value  = False
-        self.le.value  = False
+        self.oe.value = False
+        self.le.value = False
         self.clk.value = True
         time.sleep(0.00001)
         self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = False
+        self.oe.value = True
+        self.le.value = False
         self.clk.value = True
         time.sleep(0.00001)
         self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = val
+        self.oe.value = True
+        self.le.value = val
         self.clk.value = True
         time.sleep(0.00001)
         self.clk.value = False
-        self.oe.value  = True
-        self.le.value  = False
+        self.oe.value = True
+        self.le.value = False
         self.clk.value = True
         time.sleep(0.00001)
-        self.oe.value  = False
+        self.oe.value = False
 
     def write_config(self, value):
         self.set_special_mode(True)

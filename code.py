@@ -25,6 +25,7 @@ import neopixel
 
 print("test")
 
+
 class stepper:
     def __init__(self, num_steps, neopixel_pin):
         self.current_step = 0
@@ -36,12 +37,13 @@ class stepper:
 
         self.CURRENT_COLOR = (255, 0, 0)
         self.ACTIVE_COLOR = (0, 255, 0)
-        self.OFF = (0, 0, 0)
+        self.OFF_COLOR = (0, 0, 0)
 
-        self.pixels = neopixel.NeoPixel(pin = neopixel_pin, n = num_steps, brightness = .25)
+        self.pixels = neopixel.NeoPixel(pin=neopixel_pin, n=num_steps, brightness=0.1)
+        self.color_range()
 
     def advance_step(self):
-        self.pixels[self.current_step] = self.OFF
+        self.pixels[self.current_step] = self.ACTIVE_COLOR
 
         if self.stepping_forward:
             if self.current_step < self.last_step:
@@ -54,7 +56,6 @@ class stepper:
             else:
                 self.current_step = self.last_step
 
-        
         self.pixels[self.current_step] = self.CURRENT_COLOR
 
         return self.current_step
@@ -65,37 +66,60 @@ class stepper:
     def reset(self):
         self.current_step = self.first_step
 
+    def color_range(self):
+        self.pixels.fill(self.OFF_COLOR)
+
+        step_to_color = self.first_step
+
+        while step_to_color <= self.last_step:
+            print(
+                f"first step: {self.first_step}\nlast step: {self.last_step}\ncoloring step: {step_to_color}"
+            )
+            self.pixels[step_to_color] = self.ACTIVE_COLOR
+            step_to_color = step_to_color + 1
+
     def adjust_range_start(self, adjustment):
         # keep adjustment in the range where self.first_step >= 0 and
         # self.last_step < self.num_steps
-        #adjustment = max(adjustment, -self.first_step)
-        #adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
+        # adjustment = max(adjustment, -self.first_step)
+        # adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
 
-        if (self.first_step + adjustment) <= 7 and self.first_step + adjustment >= 0:
+        if (
+            self.first_step + adjustment
+        ) < self.num_steps and self.first_step + adjustment >= 0:
             self.first_step += adjustment
 
-        if (self.last_step + adjustment) <= 7 and self.last_step + adjustment >= 0:
+        if (
+            self.last_step + adjustment
+        ) < self.num_steps and self.last_step + adjustment >= 0:
             self.last_step += adjustment
 
-        self.pixels[first_step] = self.ACTIVE_COLOR
-
-        print(f"adjust_range_start 1st step={self.first_step},last={self.last_step}, adjustment={adjustment}")
+        print(
+            f"adjust_range_start 1st step={self.first_step},last={self.last_step}, adjustment={adjustment}"
+        )
         # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
         # eventually. We might want to revisit this.
 
+        self.color_range()
+
     def adjust_range_length(self, adjustment):
         # keep adjustment in the range where self.first_step <= self.last_step and
         # self.last_step < self.num_steps
-        #adjustment = max(adjustment, self.first_step - self.last_step)
-        #adjustment = min(adjustment, self.last_step - 1 - self.first_step)
+        # adjustment = max(adjustment, self.first_step - self.last_step)
+        # adjustment = min(adjustment, self.last_step - 1 - self.first_step)
         if (self.last_step + adjustment) <= 7 and self.last_step + adjustment >= 0:
             self.last_step += adjustment
 
-        print(f"adjust_range_length 1st step = {self.first_step} last = {self.last_step}, adjustment = {adjustment}")
-         # TODO: self.current_step might be out of range; leave that
+        print(
+            f"adjust_range_length 1st step = {self.first_step} last = {self.last_step}, adjustment = {adjustment}"
+        )
+        # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
         # eventually. We might want to revisit this.
+
+        self.color_range()
+
 
 class drum:
     def __init__(self, name, note, sequence):
@@ -104,14 +128,16 @@ class drum:
         self.sequence = sequence
 
     def __repr__(self):
-        return f'drum({repr(self.name)},{repr(self.note)},{repr(self.sequence)})'
+        return f"drum({repr(self.name)},{repr(self.note)},{repr(self.sequence)})"
+
 
 def set_bpm(newbpm: int):
     global bpm, steps_millis
     bpm = newbpm
-    beat_time = 60/bpm  # time length of a single beat
+    beat_time = 60 / bpm  # time length of a single beat
     beat_millis = beat_time * 1000
     steps_millis = beat_millis / steps_per_beat
+
 
 # define I2C
 i2c = board.STEMMA_I2C()
@@ -137,41 +163,38 @@ reverse_button_in = DigitalInOut(board.A1)
 reverse_button_in.pull = Pull.UP
 reverse_button = Debouncer(reverse_button_in)
 
-#channel 1 button
-button1_in = DigitalInOut(board.D9) 
+# channel 1 button
+button1_in = DigitalInOut(board.D9)
 button1_in.pull = Pull.UP
 button1 = Button(button1_in, value_when_pressed=False)
 
-#channel 2 button
-button2_in = DigitalInOut(board.D8) 
+# channel 2 button
+button2_in = DigitalInOut(board.D8)
 button2_in.pull = Pull.UP
 button2 = Button(button2_in, value_when_pressed=False)
 
-#channel 3 button
-button3_in = DigitalInOut(board.A3) 
+# channel 3 button
+button3_in = DigitalInOut(board.A3)
 button3_in.pull = Pull.UP
 button3 = Button(button3_in, value_when_pressed=False)
 
 # Setup switches
 # Input shift register
 switches = keypad.ShiftRegisterKeys(
-    data = board.SCK,
-    latch = board.MOSI,
-    clock = board.MISO,
-    key_count = 40,
-    value_when_pressed = True,
-    value_to_latch = True,
-    )
+    data=board.SCK,
+    latch=board.MOSI,
+    clock=board.MISO,
+    key_count=40,
+    value_when_pressed=True,
+    value_to_latch=True,
+)
 
 
 # Setup LEDs
 # Output shift register
 leds = TLC5916(
-    oe_pin = board.D5,
-    sdi_pin = board.D3,
-    clk_pin = board.D2,
-    le_pin = board.D4,
-    n = 5)
+    oe_pin=board.D5, sdi_pin=board.D3, clk_pin=board.D2, le_pin=board.D4, n=5
+)
 
 leds.write_config(0)
 #
@@ -187,7 +210,7 @@ tempo_encoder_pos = -tempo_encoder.position
 
 # setup adafruit quad encoder
 rotary_seesaw2 = seesaw.Seesaw(i2c, addr=0x49)  # default address is 0x36
-   
+
 # Pattern Length Encoder
 pattern_length_encoder = rotaryio.IncrementalEncoder(rotary_seesaw2, 1)
 last_pattern_length_encoder_pos = 0
@@ -205,18 +228,22 @@ midi = usb_midi.ports[1]
 
 # default starting sequence
 drums = [
-    drum("Bass", 36, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("Snar", 38, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("LTom", 41, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("MTom", 44, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
-    drum("HTom", 56, bitarray([ 0, 0, 0, 0, 0, 0, 0, 0 ])),
+    drum("Bass", 36, bitarray([0, 0, 0, 0, 0, 0, 0, 0])),
+    drum("Snar", 38, bitarray([0, 0, 0, 0, 0, 0, 0, 0])),
+    drum("LTom", 41, bitarray([0, 0, 0, 0, 0, 0, 0, 0])),
+    drum("MTom", 44, bitarray([0, 0, 0, 0, 0, 0, 0, 0])),
+    drum("HTom", 56, bitarray([0, 0, 0, 0, 0, 0, 0, 0])),
 ]
 
+
 def play_drum(note):
-    midi_msg_on = bytearray([0x90|(channel - 1), note, 120])  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
-    midi_msg_off = bytearray([0x80|(channel - 1), note, 0])
+    midi_msg_on = bytearray(
+        [0x90 | (channel - 1), note, 120]
+    )  # 0x90 is noteon ch 1, 0x99 is noteon ch 10
+    midi_msg_off = bytearray([0x80 | (channel - 1), note, 0])
     midi.write(midi_msg_on)
     midi.write(midi_msg_off)
+
 
 def light_steps(drum, step, state):
     # pylint: disable=global-statement
@@ -226,15 +253,17 @@ def light_steps(drum, step, state):
     new_step = remap[step]
     leds[new_drum * num_steps + new_step] = state
     if state:
-        print(f'drum{drum} step{step}: on')
+        print(f"drum{drum} step{step}: on")
     else:
-        print(f'drum{drum} step{step}: off')
+        print(f"drum{drum} step{step}: off")
+
 
 def print_sequence():
     print("drums = [ ")
     for drum in drums:
         print(" " + repr(drum) + ",")
     print("]")
+
 
 # format of the header in NVM for save_state/load_state:
 # < -- little-endian; lower bits are more significant
@@ -246,25 +275,25 @@ def print_sequence():
 # this number should change if load/save logic changes in
 # and incompatible way
 magic_number = 0x02
+
+
 class nvm_header:
-    format = b'<BBH'
+    format = b"<BBH"
     size = struct.calcsize(format)
+
     def pack_into(buffer, offset, *v):
         struct.pack_into(nvm_header.format, buffer, offset, *v)
-    def unpack_from(buffer, offset = 0):
+
+    def unpack_from(buffer, offset=0):
         return struct.unpack_from(nvm_header.format, buffer, offset)
+
 
 def save_state() -> None:
     length = nvm_header.size
     for drum in drums:
         length += drum.sequence.bytelen()
     bytes = bytearray(length)
-    nvm_header.pack_into(
-        bytes,
-        0,
-        magic_number,
-        num_steps,
-        bpm)
+    nvm_header.pack_into(bytes, 0, magic_number, num_steps, bpm)
     index = nvm_header.size
     for drum in drums:
         drum.sequence.save(bytes, index)
@@ -273,9 +302,10 @@ def save_state() -> None:
     # to nonvolatile memory
     microcontroller.nvm[0:length] = bytes
 
+
 def load_state() -> None:
     global num_steps, bpm, steps_millis
-    header = nvm_header.unpack_from(microcontroller.nvm[0:nvm_header.size])
+    header = nvm_header.unpack_from(microcontroller.nvm[0 : nvm_header.size])
     if header[0] != magic_number or header[1] == 0 or header[2] == 0:
         return
     num_steps = header[1]
@@ -283,9 +313,10 @@ def load_state() -> None:
     index = nvm_header.size
     for drum in drums:
         seq = drum.sequence
-        seq.load(microcontroller.nvm[index:index+seq.bytelen()])
+        seq.load(microcontroller.nvm[index : index + seq.bytelen()])
         index += seq.bytelen()
     set_bpm(newbpm)
+
 
 # try to load the state (no-op if NVM not valid)
 load_state()
@@ -315,7 +346,7 @@ display.marquee("BPM", 0.05, loop=False)
 time.sleep(0.75)
 display.marquee(str(bpm), 0.1, loop=False)
 
-channel= 1
+channel = 1
 
 # light up initial LEDs
 for drum_index in range(len(drums)):
@@ -338,7 +369,7 @@ while True:
     reverse_button.update()
     if reverse_button.fell:
         stepper.reverse()
- 
+
     button1.update()
     if button1.pressed:
         channel = 1
@@ -356,15 +387,19 @@ while True:
         diff = ticks_diff(now, last_step)
         if diff >= steps_millis:
             late_time = ticks_diff(int(diff), int(steps_millis))
-            last_step = ticks_add(now, - late_time//2)
+            last_step = ticks_add(now, -late_time // 2)
 
             # TODO: how to display the current step? Separate LED?
             for drum in drums:
-                if drum.sequence[stepper.current_step]:  # if there's a 1 at the step for the seq, play it
+                if drum.sequence[
+                    stepper.current_step
+                ]:  # if there's a 1 at the step for the seq, play it
                     play_drum(drum.note)
             # TODO: how to display the current step? Separate LED?
             stepper.advance_step()
-            tempo_encoder_pos = -tempo_encoder.position  # only check encoder while playing between steps
+            tempo_encoder_pos = (
+                -tempo_encoder.position
+            )  # only check encoder while playing between steps
             pattern_length_encoder_pos = -pattern_length_encoder.position
             step_shift_encoder_pos = -step_shift_encoder.position
     else:  # check the encoder all the time when not playing
@@ -381,8 +416,10 @@ while True:
             drum_index = i // num_steps
             step_index = i % num_steps
             drum = drums[drum_index]
-            drum.sequence.toggle(step_index) # toggle step
-            light_steps(drum_index, step_index, drum.sequence[step_index])  # toggle light
+            drum.sequence.toggle(step_index)  # toggle step
+            light_steps(
+                drum_index, step_index, drum.sequence[step_index]
+            )  # toggle light
             leds.write()
 
     if tempo_encoder_pos != last_tempo_encoder_pos:
@@ -395,7 +432,9 @@ while True:
         last_tempo_encoder_pos = tempo_encoder_pos
 
     if pattern_length_encoder_pos != last_pattern_length_encoder_pos:
-        pattern_length_encoder_delta = pattern_length_encoder_pos - last_pattern_length_encoder_pos
+        pattern_length_encoder_delta = (
+            pattern_length_encoder_pos - last_pattern_length_encoder_pos
+        )
         stepper.adjust_range_length(pattern_length_encoder_delta)
         last_pattern_length_encoder_pos = pattern_length_encoder_pos
         print(f"last_pattern_length_encoder_pos = {pattern_length_encoder_pos}")
@@ -407,6 +446,5 @@ while True:
         print(f"laststep last_step_shift_encoder_pos = {step_shift_encoder_pos}")
 
 
-
- # suppresions:
- # type: ignore
+# suppresions:
+# type: ignore
