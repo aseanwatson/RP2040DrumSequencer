@@ -21,18 +21,28 @@ from bitarray import bitarray
 from TLC5916 import TLC5916
 import struct
 import microcontroller
+import neopixel
 
 print("test")
 
 class stepper:
-    def __init__(self, num_steps):
+    def __init__(self, num_steps, neopixel_pin):
         self.current_step = 0
         self.first_step = 0
         self.last_step = num_steps - 1
         self.stepping_forward = True
         self.num_steps = num_steps
+        self.neopixel_pin = neopixel_pin
+
+        self.CURRENT_COLOR = (255, 0, 0)
+        self.ACTIVE_COLOR = (0, 255, 0)
+        self.OFF = (0, 0, 0)
+
+        self.pixels = neopixel.NeoPixel(pin = neopixel_pin, n = num_steps, brightness = .25)
 
     def advance_step(self):
+        self.pixels[self.current_step] = self.OFF
+
         if self.stepping_forward:
             if self.current_step < self.last_step:
                 self.current_step = self.current_step + 1
@@ -43,6 +53,10 @@ class stepper:
                 self.current_step = self.current_step - 1
             else:
                 self.current_step = self.last_step
+
+        
+        self.pixels[self.current_step] = self.CURRENT_COLOR
+
         return self.current_step
 
     def reverse(self):
@@ -54,10 +68,17 @@ class stepper:
     def adjust_range_start(self, adjustment):
         # keep adjustment in the range where self.first_step >= 0 and
         # self.last_step < self.num_steps
-        adjustment = max(adjustment, -self.first_step)
-        adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
-        self.first_step += adjustment
-        self.last_step += adjustment
+        #adjustment = max(adjustment, -self.first_step)
+        #adjustment = min(adjustment, self.num_steps - 1 - self.last_step)
+
+        if (self.first_step + adjustment) <= 7 and self.first_step + adjustment >= 0:
+            self.first_step += adjustment
+
+        if (self.last_step + adjustment) <= 7 and self.last_step + adjustment >= 0:
+            self.last_step += adjustment
+
+        self.pixels[first_step] = self.ACTIVE_COLOR
+
         print(f"adjust_range_start 1st step={self.first_step},last={self.last_step}, adjustment={adjustment}")
         # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
@@ -66,10 +87,12 @@ class stepper:
     def adjust_range_length(self, adjustment):
         # keep adjustment in the range where self.first_step <= self.last_step and
         # self.last_step < self.num_steps
-        adjustment = max(adjustment, self.first_step - self.last_step)
-        adjustment = min(adjustment, self.last_step - 1 - self.first_step)
-        self.last_step += adjustment
-        print(f"adjust_range_length 1st step={self.first_step},last={self.last_step}, adjustment={adjustment}")
+        #adjustment = max(adjustment, self.first_step - self.last_step)
+        #adjustment = min(adjustment, self.last_step - 1 - self.first_step)
+        if (self.last_step + adjustment) <= 7 and self.last_step + adjustment >= 0:
+            self.last_step += adjustment
+
+        print(f"adjust_range_length 1st step = {self.first_step} last = {self.last_step}, adjustment = {adjustment}")
          # TODO: self.current_step might be out of range; leave that
         # as is; advance_step() will move it into the right range
         # eventually. We might want to revisit this.
@@ -99,7 +122,9 @@ steps_per_beat = 4  # subdivide beats down to to 16th notes
 # e.g. 4 beats per measure, 1/4 note gets the beat
 set_bpm(120)
 
-stepper = stepper(num_steps)
+# Number of steps and GPIO pin for step LED
+stepper = stepper(num_steps, board.D7)
+
 playing = False
 
 # Setup button
